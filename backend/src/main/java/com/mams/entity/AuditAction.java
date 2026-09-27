@@ -1,0 +1,20 @@
+package com.mams.entity;
+
+public enum AuditAction {
+    LOGIN,
+    LOGOUT,
+    CREATE,
+    UPDATE,
+    DELETE,
+    TRANSFER_CREATE,
+    TRANSFER_COMPLETE,
+    TRANSFER_CANCEL,
+    ASSIGNMENT_CREATE,
+    ASSIGNMENT_RETURN,
+    ASSIGNMENT_CANCEL,
+    EXPENDITURE_CREATE,
+    PURCHASE_CREATE,
+    USER_CREATE,
+    USER_UPDATE,
+    ROLE_CHANGE
+}

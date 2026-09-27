@@ -1,0 +1,26 @@
+:root {
+  --primary-color: #1c3144;
+  --secondary-color: #3f88c5;
+  --background-color: #f4f6f9;
+  --text-color: #2c3e50;
+  --light-gray: #e0e6ed;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background-color: var(--background-color);
+  color: var(--text-color);
+  line-height: 1.6;
+}
+
+.app-container {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}

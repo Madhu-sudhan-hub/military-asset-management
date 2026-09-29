@@ -40,7 +40,7 @@ public class AuditLogServiceImpl implements AuditLogService {
     }
 
     @Override
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    @Transactional
     public void logAction(User user, String action, String entityType, Long entityId, String description, String ipAddress) {
         if (ipAddress == null) {
             ipAddress = getCurrentIpAddress();
@@ -56,7 +56,7 @@ public class AuditLogServiceImpl implements AuditLogService {
     }
 
     @Override
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    @Transactional
     public void logAction(String action, String entityType, Long entityId, String description, String ipAddress) {
         User user = null;
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();

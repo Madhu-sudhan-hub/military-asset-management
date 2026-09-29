@@ -19,13 +19,24 @@ public class AssetController {
     @Autowired
     private AssetService assetService;
 
-    @GetMapping
-    public ResponseEntity<Page<AssetResponse>> getAllAssets(
-            @RequestParam(required = false) Long baseId,
-            @RequestParam(required = false) Long equipmentTypeId,
-            Pageable pageable) {
-        return ResponseEntity.ok(assetService.getAllAssets(baseId, equipmentTypeId, pageable));
-    }
+  @GetMapping
+public ResponseEntity<Page<AssetResponse>> getAllAssets(
+        @RequestParam(required = false) Long baseId,
+        @RequestParam(required = false) Long equipmentTypeId,
+        @RequestParam(required = false) String status,
+        @RequestParam(required = false) String search,
+        Pageable pageable) {
+
+    return ResponseEntity.ok(
+            assetService.getAllAssets(
+                    baseId,
+                    equipmentTypeId,
+                    status,
+                    search,
+                    pageable
+            )
+    );
+}
 
     @GetMapping("/{id}")
     public ResponseEntity<AssetResponse> getAssetById(@PathVariable Long id) {

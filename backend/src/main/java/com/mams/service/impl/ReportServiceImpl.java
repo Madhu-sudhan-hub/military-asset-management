@@ -99,7 +99,7 @@ public class ReportServiceImpl implements ReportService {
 
     @Override
     public Page<AssetResponse> getAssetReport(Long baseId, Long equipmentTypeId, String status, String search, Pageable pageable) {
-        return assetService.getAllAssets(baseId, equipmentTypeId, pageable); // Need to add status and search? We did add to repo. Let's fix AssetService in a bit.
+        return assetService.getAllAssets(baseId, equipmentTypeId, status, search, pageable);
     }
 
     @Autowired

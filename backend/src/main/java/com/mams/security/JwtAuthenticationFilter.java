@@ -62,6 +62,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         } catch (Exception ex) {
             // Authentication exception, token invalid or expired.
             // Will continue down filter chain and hit security entry point.
+            System.err.println("JWT Authentication failed: " + ex.getMessage());
+            ex.printStackTrace();
         }
         filterChain.doFilter(request, response);
     }

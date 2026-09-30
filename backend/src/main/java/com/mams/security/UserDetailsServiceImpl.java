@@ -17,6 +17,7 @@ public class UserDetailsServiceImpl implements UserDetailsService {
     private UserRepository userRepository;
 
     @Override
+    @org.springframework.transaction.annotation.Transactional
     public UserDetails loadUserByUsername(String usernameOrEmail) throws UsernameNotFoundException {
         Optional<User> userOptional = userRepository.findByUsername(usernameOrEmail);
         

@@ -1,6 +1,15 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { auditLogService } from '../services/auditLogService';
 import { AuthContext } from '../context/AuthContext';
+import { 
+    ShieldAlert, 
+    Filter, 
+    Eye,
+    ChevronLeft,
+    ChevronRight,
+    X,
+    Lock
+} from 'lucide-react';
 
 const AuditLogs = () => {
     const { role } = useContext(AuthContext);
@@ -24,8 +33,6 @@ const AuditLogs = () => {
     useEffect(() => {
         if (role === 'ADMIN') {
             loadLogs();
-        } else {
-            setError("You do not have permission to view audit logs.");
         }
     }, [page]);
 
@@ -41,7 +48,6 @@ const AuditLogs = () => {
                 if (currentFilters[k]) params[k] = currentFilters[k];
             });
 
-            // Convert dates to proper ISO if needed, but backend takes them directly if properly formatted
             if (params.startDate) params.startDate = params.startDate + 'T00:00:00';
             if (params.endDate) params.endDate = params.endDate + 'T23:59:59';
 
@@ -82,121 +88,211 @@ const AuditLogs = () => {
 
     if (role !== 'ADMIN') {
         return (
-            <div className="page-content">
-                <div className="alert error">You do not have permission to view audit logs.</div>
+            <div className="empty-state">
+                <div className="empty-icon" style={{ background: '#fee2e2', color: 'var(--danger)' }}>
+                    <Lock size={32} />
+                </div>
+                <h3>Access Denied</h3>
+                <p>You do not have permission to view audit logs. This area is restricted to administrators.</p>
             </div>
         );
     }
 
     return (
-        <div className="page-content">
-            <div className="page-header">
-                <h2>Audit Logs</h2>
-            </div>
-
-            <div className="filters audit-filters" style={{ display: 'flex', gap: '1rem', marginBottom: '2rem', flexWrap: 'wrap', alignItems: 'flex-end', background: '#f8f9fa', padding: '1rem', borderRadius: '8px' }}>
-                <div>
-                    <label style={{ display: 'block', fontSize: '0.8rem', color: '#6c757d' }}>User ID</label>
-                    <input type="text" name="userId" value={filters.userId} onChange={handleFilterChange} className="form-control" placeholder="User ID" />
-                </div>
-                <div>
-                    <label style={{ display: 'block', fontSize: '0.8rem', color: '#6c757d' }}>Action</label>
-                    <input type="text" name="action" value={filters.action} onChange={handleFilterChange} className="form-control" placeholder="e.g. LOGIN" />
-                </div>
-                <div>
-                    <label style={{ display: 'block', fontSize: '0.8rem', color: '#6c757d' }}>Entity Type</label>
-                    <input type="text" name="entityType" value={filters.entityType} onChange={handleFilterChange} className="form-control" placeholder="e.g. TRANSFER" />
-                </div>
-                <div>
-                    <label style={{ display: 'block', fontSize: '0.8rem', color: '#6c757d' }}>Entity ID</label>
-                    <input type="text" name="entityId" value={filters.entityId} onChange={handleFilterChange} className="form-control" placeholder="Entity ID" />
-                </div>
-                <div>
-                    <label style={{ display: 'block', fontSize: '0.8rem', color: '#6c757d' }}>Start Date</label>
-                    <input type="date" name="startDate" value={filters.startDate} onChange={handleFilterChange} className="form-control" />
-                </div>
-                <div>
-                    <label style={{ display: 'block', fontSize: '0.8rem', color: '#6c757d' }}>End Date</label>
-                    <input type="date" name="endDate" value={filters.endDate} onChange={handleFilterChange} className="form-control" />
-                </div>
-                <div style={{ display: 'flex', gap: '0.5rem' }}>
-                    <button onClick={applyFilters} className="btn-primary" style={{ padding: '0.5rem 1rem' }}>Apply</button>
-                    <button onClick={resetFilters} style={{ background: '#6c757d', color: 'white', border: 'none', padding: '0.5rem 1rem', borderRadius: '4px', cursor: 'pointer' }}>Reset</button>
-                </div>
+        <div className="page-content-wrapper">
+            <div className="page-actions">
+                <div></div>
             </div>
 
             {error && <div className="alert error">{error}</div>}
 
-            {loading ? (
-                <div style={{ textAlign: 'center', padding: '3rem' }}>
-                    <h3>Loading Audit Logs...</h3>
+            <div className="filter-card card" style={{ marginBottom: '24px' }}>
+                <div className="filter-header">
+                    <h3><Filter size={18} /> Audit Log Filters</h3>
                 </div>
-            ) : logs.length === 0 ? (
-                <div style={{ textAlign: 'center', padding: '3rem', background: '#f8f9fa', borderRadius: '8px' }}>
-                    <h3 style={{ color: '#6c757d' }}>No audit records found for the selected filters.</h3>
+                <div className="filter-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))' }}>
+                    <div className="form-group">
+                        <label>User ID</label>
+                        <input type="text" name="userId" value={filters.userId} onChange={handleFilterChange} className="form-control" placeholder="ID" />
+                    </div>
+                    <div className="form-group">
+                        <label>Action</label>
+                        <input type="text" name="action" value={filters.action} onChange={handleFilterChange} className="form-control" placeholder="e.g. LOGIN" />
+                    </div>
+                    <div className="form-group">
+                        <label>Entity Type</label>
+                        <input type="text" name="entityType" value={filters.entityType} onChange={handleFilterChange} className="form-control" placeholder="e.g. TRANSFER" />
+                    </div>
+                    <div className="form-group">
+                        <label>Entity ID</label>
+                        <input type="text" name="entityId" value={filters.entityId} onChange={handleFilterChange} className="form-control" placeholder="ID" />
+                    </div>
+                    <div className="form-group">
+                        <label>Start Date</label>
+                        <input type="date" name="startDate" value={filters.startDate} onChange={handleFilterChange} className="form-control" />
+                    </div>
+                    <div className="form-group">
+                        <label>End Date</label>
+                        <input type="date" name="endDate" value={filters.endDate} onChange={handleFilterChange} className="form-control" />
+                    </div>
+                    <div className="filter-actions" style={{ gridColumn: '1 / -1', gap: '12px' }}>
+                        <button onClick={resetFilters} className="btn-secondary">Reset</button>
+                        <button onClick={applyFilters} className="btn-primary">Apply Filters</button>
+                    </div>
                 </div>
-            ) : (
-                <div className="table-responsive">
-                    <table className="data-table">
-                        <thead>
-                            <tr>
-                                <th>ID</th>
-                                <th>Date/Time</th>
-                                <th>User</th>
-                                <th>Action</th>
-                                <th>Entity Type</th>
-                                <th>Entity ID</th>
-                                <th>Description</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {logs.map(log => (
-                                <tr key={log.auditLogId}>
-                                    <td>{log.auditLogId}</td>
-                                    <td>{new Date(log.createdAt).toLocaleString()}</td>
-                                    <td>{log.username || 'System'} (ID: {log.userId || '-'})</td>
-                                    <td><span className="badge" style={{ background: '#007bff' }}>{log.action}</span></td>
-                                    <td>{log.entityType || '-'}</td>
-                                    <td>{log.entityId || '-'}</td>
-                                    <td style={{ maxWidth: '300px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{log.description}</td>
-                                    <td>
-                                        <button className="btn-secondary" onClick={() => viewDetails(log.auditLogId)}>View</button>
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
-            )}
+            </div>
 
+            <div className="table-container">
+                {loading ? (
+                    <div className="loading-container" style={{ minHeight: '300px' }}>
+                        <div className="spinner"></div>
+                        <span>Loading audit logs...</span>
+                    </div>
+                ) : logs.length === 0 ? (
+                    <div className="empty-state" style={{ border: 'none' }}>
+                        <div className="empty-icon">
+                            <ShieldAlert size={32} />
+                        </div>
+                        <h3>No audit records found</h3>
+                        <p>No audit logs match your current filter criteria.</p>
+                    </div>
+                ) : (
+                    <div style={{ overflowX: 'auto' }}>
+                        <table className="data-table" style={{ fontSize: '13px' }}>
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Date/Time</th>
+                                    <th>User</th>
+                                    <th>Action</th>
+                                    <th>Entity</th>
+                                    <th>Entity ID</th>
+                                    <th>Description</th>
+                                    <th style={{ textAlign: 'right' }}>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {logs.map(log => (
+                                    <tr key={log.auditLogId}>
+                                        <td style={{ color: 'var(--text-secondary)' }}>#{log.auditLogId}</td>
+                                        <td style={{ whiteSpace: 'nowrap' }}>{new Date(log.createdAt).toLocaleString()}</td>
+                                        <td>
+                                            <span style={{ fontWeight: 500 }}>{log.username || 'System'}</span>
+                                            {log.userId && <span style={{ color: 'var(--text-secondary)', fontSize: '11px', display: 'block' }}>ID: {log.userId}</span>}
+                                        </td>
+                                        <td>
+                                            <span className="badge badge-base" style={{ background: 'var(--primary-navy)', color: 'white' }}>
+                                                {log.action}
+                                            </span>
+                                        </td>
+                                        <td>{log.entityType || '-'}</td>
+                                        <td>{log.entityId || '-'}</td>
+                                        <td style={{ maxWidth: '250px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={log.description}>
+                                            {log.description}
+                                        </td>
+                                        <td style={{ textAlign: 'right' }}>
+                                            <button onClick={() => viewDetails(log.auditLogId)} className="icon-btn" title="View Details" style={{ marginLeft: 'auto' }}>
+                                                <Eye size={16} />
+                                            </button>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                )}
+            </div>
+            
             {!loading && totalPages > 1 && (
-                <div className="pagination" style={{ display: 'flex', justifyContent: 'center', gap: '1rem', marginTop: '1rem' }}>
-                    <button onClick={() => setPage(p => Math.max(0, p - 1))} disabled={page === 0}>Previous</button>
-                    <span>Page {page + 1} of {totalPages}</span>
-                    <button onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))} disabled={page === totalPages - 1}>Next</button>
+                <div className="pagination" style={{ 
+                    display: 'flex', 
+                    justifyContent: 'flex-end', 
+                    alignItems: 'center', 
+                    gap: '16px', 
+                    marginTop: '24px' 
+                }}>
+                    <span style={{ fontSize: '14px', color: 'var(--text-secondary)' }}>
+                        Page {page + 1} of {totalPages}
+                    </span>
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                        <button 
+                            onClick={() => setPage(p => Math.max(0, p - 1))} 
+                            disabled={page === 0}
+                            className="btn-secondary"
+                            style={{ padding: '8px' }}
+                        >
+                            <ChevronLeft size={16} />
+                        </button>
+                        <button 
+                            onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))} 
+                            disabled={page >= totalPages - 1}
+                            className="btn-secondary"
+                            style={{ padding: '8px' }}
+                        >
+                            <ChevronRight size={16} />
+                        </button>
+                    </div>
                 </div>
             )}
 
             {selectedLog && (
-                <div className="modal-overlay" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-                    <div className="modal-content" style={{ background: '#fff', padding: '2rem', borderRadius: '8px', width: '100%', maxWidth: '500px' }}>
-                        <h3 style={{ marginTop: 0 }}>Audit Log Details</h3>
-                        <div style={{ margin: '1.5rem 0', display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
-                            <div><strong>Audit ID:</strong> {selectedLog.auditLogId}</div>
-                            <div><strong>Timestamp:</strong> {new Date(selectedLog.createdAt).toLocaleString()}</div>
-                            <div><strong>User:</strong> {selectedLog.username || 'System'} (ID: {selectedLog.userId || '-'})</div>
-                            <div><strong>Action:</strong> <span className="badge" style={{ background: '#007bff' }}>{selectedLog.action}</span></div>
-                            <div><strong>Entity Type:</strong> {selectedLog.entityType || '-'}</div>
-                            <div><strong>Entity ID:</strong> {selectedLog.entityId || '-'}</div>
-                            <div><strong>IP Address:</strong> {selectedLog.ipAddress || '-'}</div>
-                            <div style={{ background: '#f8f9fa', padding: '1rem', borderRadius: '4px', border: '1px solid #dee2e6' }}>
-                                <strong>Description:</strong><br />
-                                {selectedLog.description}
+                <div className="modal-overlay" onClick={() => setSelectedLog(null)}>
+                    <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: '600px' }}>
+                        <div className="modal-header">
+                            <h2>Audit Log Details</h2>
+                            <button className="close-btn" onClick={() => setSelectedLog(null)}>
+                                <X size={20} />
+                            </button>
+                        </div>
+                        <div className="modal-body">
+                            <div className="card" style={{ marginBottom: '24px', background: '#f8fafc' }}>
+                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                                    <div>
+                                        <p style={{ margin: '0 0 4px 0', fontSize: '12px', color: 'var(--text-secondary)' }}>Audit ID</p>
+                                        <p style={{ margin: 0, fontWeight: 600, fontFamily: 'monospace' }}>#{selectedLog.auditLogId}</p>
+                                    </div>
+                                    <div>
+                                        <p style={{ margin: '0 0 4px 0', fontSize: '12px', color: 'var(--text-secondary)' }}>Timestamp</p>
+                                        <p style={{ margin: 0 }}>{new Date(selectedLog.createdAt).toLocaleString()}</p>
+                                    </div>
+                                    <div>
+                                        <p style={{ margin: '0 0 4px 0', fontSize: '12px', color: 'var(--text-secondary)' }}>User</p>
+                                        <p style={{ margin: 0, fontWeight: 500 }}>{selectedLog.username || 'System'} <span style={{ color: 'var(--text-secondary)', fontSize: '12px', fontWeight: 'normal' }}>(ID: {selectedLog.userId || '-'})</span></p>
+                                    </div>
+                                    <div>
+                                        <p style={{ margin: '0 0 4px 0', fontSize: '12px', color: 'var(--text-secondary)' }}>Action</p>
+                                        <span className="badge" style={{ background: 'var(--primary-navy)', color: 'white' }}>{selectedLog.action}</span>
+                                    </div>
+                                    <div>
+                                        <p style={{ margin: '0 0 4px 0', fontSize: '12px', color: 'var(--text-secondary)' }}>Entity Type</p>
+                                        <p style={{ margin: 0 }}>{selectedLog.entityType || '-'}</p>
+                                    </div>
+                                    <div>
+                                        <p style={{ margin: '0 0 4px 0', fontSize: '12px', color: 'var(--text-secondary)' }}>Entity ID</p>
+                                        <p style={{ margin: 0, fontFamily: 'monospace' }}>{selectedLog.entityId || '-'}</p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <p style={{ margin: '0 0 8px 0', fontSize: '14px', fontWeight: 600, color: 'var(--text-main)' }}>Description</p>
+                                <div style={{ background: '#f1f5f9', padding: '16px', borderRadius: '8px', fontSize: '14px', lineHeight: '1.5', fontFamily: 'monospace', color: 'var(--primary-navy)' }}>
+                                    {selectedLog.description}
+                                </div>
+                            </div>
+
+                            <div style={{ marginTop: '16px' }}>
+                                <p style={{ margin: '0 0 8px 0', fontSize: '14px', fontWeight: 600, color: 'var(--text-main)' }}>Security Metadata</p>
+                                <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '16px' }}>
+                                    <div>
+                                        <p style={{ margin: '0 0 4px 0', fontSize: '12px', color: 'var(--text-secondary)' }}>IP Address</p>
+                                        <p style={{ margin: 0, fontFamily: 'monospace' }}>{selectedLog.ipAddress || 'Not recorded'}</p>
+                                    </div>
+                                </div>
                             </div>
                         </div>
-                        <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-                            <button onClick={() => setSelectedLog(null)} className="btn-primary">Close</button>
+                        <div className="modal-footer">
+                            <button onClick={() => setSelectedLog(null)} className="btn-primary">Close Details</button>
                         </div>
                     </div>
                 </div>

@@ -1,15 +1,26 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { Link } from 'react-router-dom';
 import { assignmentService } from '../services/assignmentService';
-import { baseService, personnelService, assetService } from '../services/dataService';
+import { baseService } from '../services/dataService';
 import { AuthContext } from '../context/AuthContext';
+import { 
+    ClipboardList, 
+    Plus, 
+    Filter, 
+    Eye, 
+    ArrowDownToLine, 
+    XCircle,
+    X,
+    ChevronLeft,
+    ChevronRight,
+    User
+} from 'lucide-react';
 
 const Assignments = () => {
     const { role } = useContext(AuthContext);
     
     const [assignments, setAssignments] = useState([]);
     const [bases, setBases] = useState([]);
-    const [personnelList, setPersonnelList] = useState([]);
     
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
@@ -39,7 +50,6 @@ const Assignments = () => {
         try {
             const basesRes = await baseService.getAllBases();
             setBases(basesRes.content || []);
-            // Initially load all personnel or handle dynamically, skipping large personnel load for now unless filtered by base
         } catch (err) {
             console.error("Failed to load dropdowns");
         }
@@ -66,6 +76,18 @@ const Assignments = () => {
         setPage(0);
     };
 
+    const resetFilters = () => {
+        setFilters({
+            personnelId: '',
+            assetId: '',
+            baseId: '',
+            status: '',
+            startDate: '',
+            endDate: ''
+        });
+        setPage(0);
+    };
+
     const handleAction = async (id, action) => {
         const text = action === 'return' ? 'mark this asset as returned' : 'cancel this assignment';
         if (!window.confirm(`Are you sure you want to ${text}?`)) return;
@@ -84,103 +106,236 @@ const Assignments = () => {
         }
     };
 
+    const getStatusBadgeClass = (status) => {
+        switch(status) {
+            case 'ACTIVE': return 'badge-active';
+            case 'RETURNED': return 'badge-inactive';
+            case 'CANCELLED': return 'badge-expended';
+            default: return 'badge-inactive';
+        }
+    };
+
     return (
-        <div className="page-content">
-            <div className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-                <h2>Asset Assignments</h2>
-                <Link to="/assignments/new" className="btn-primary">+ New Assignment</Link>
+        <div className="page-content-wrapper">
+            <div className="page-actions">
+                <div></div>
+                <Link to="/assignments/new" className="btn-primary" style={{ textDecoration: 'none' }}>
+                    <Plus size={16} /> New Assignment
+                </Link>
             </div>
 
             {error && <div className="alert error">{error}</div>}
 
-            <div className="filters" style={{ display: 'flex', gap: '1rem', marginBottom: '1rem', flexWrap: 'wrap' }}>
-                {role === 'ADMIN' && (
-                    <select name="baseId" value={filters.baseId} onChange={handleFilterChange} className="form-control">
-                        <option value="">All Bases</option>
-                        {bases.map(b => <option key={b.baseId} value={b.baseId}>{b.baseName}</option>)}
-                    </select>
-                )}
-                <select name="status" value={filters.status} onChange={handleFilterChange} className="form-control">
-                    <option value="">All Statuses</option>
-                    <option value="ACTIVE">ACTIVE</option>
-                    <option value="RETURNED">RETURNED</option>
-                    <option value="CANCELLED">CANCELLED</option>
-                </select>
-                <input type="datetime-local" name="startDate" value={filters.startDate} onChange={handleFilterChange} className="form-control" />
-                <input type="datetime-local" name="endDate" value={filters.endDate} onChange={handleFilterChange} className="form-control" />
+            <div className="filter-card card" style={{ marginBottom: '24px' }}>
+                <div className="filter-header">
+                    <h3><Filter size={18} /> Assignment Filters</h3>
+                </div>
+                <div className="filter-grid">
+                    {role === 'ADMIN' && (
+                        <div className="form-group">
+                            <label>Base Location</label>
+                            <select name="baseId" value={filters.baseId} onChange={handleFilterChange} className="form-control">
+                                <option value="">All Bases</option>
+                                {bases.map(b => <option key={b.baseId} value={b.baseId}>{b.baseName}</option>)}
+                            </select>
+                        </div>
+                    )}
+                    <div className="form-group">
+                        <label>Status</label>
+                        <select name="status" value={filters.status} onChange={handleFilterChange} className="form-control">
+                            <option value="">All Statuses</option>
+                            <option value="ACTIVE">ACTIVE</option>
+                            <option value="RETURNED">RETURNED</option>
+                            <option value="CANCELLED">CANCELLED</option>
+                        </select>
+                    </div>
+                    <div className="form-group">
+                        <label>Start Date</label>
+                        <input type="datetime-local" name="startDate" value={filters.startDate} onChange={handleFilterChange} className="form-control" />
+                    </div>
+                    <div className="form-group">
+                        <label>End Date</label>
+                        <input type="datetime-local" name="endDate" value={filters.endDate} onChange={handleFilterChange} className="form-control" />
+                    </div>
+                    <div className="filter-actions" style={{ gridColumn: '1 / -1' }}>
+                        <button onClick={resetFilters} className="btn-secondary">Reset Filters</button>
+                    </div>
+                </div>
             </div>
 
-            <div className="table-responsive" style={{ overflowX: 'auto' }}>
-                <table className="data-table" style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
-                    <thead>
-                        <tr style={{ borderBottom: '2px solid #ccc' }}>
-                            <th style={{ padding: '0.5rem' }}>Asset Tag</th>
-                            <th style={{ padding: '0.5rem' }}>Personnel</th>
-                            <th style={{ padding: '0.5rem' }}>Assigned Date</th>
-                            <th style={{ padding: '0.5rem' }}>Status</th>
-                            <th style={{ padding: '0.5rem' }}>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {loading ? (
-                            <tr><td colSpan="5" style={{ textAlign: 'center', padding: '1rem' }}>Loading...</td></tr>
-                        ) : assignments.length === 0 ? (
-                            <tr><td colSpan="5" style={{ textAlign: 'center', padding: '1rem' }}>No assignments found.</td></tr>
-                        ) : (
-                            assignments.map(a => (
-                                <tr key={a.assignmentId} style={{ borderBottom: '1px solid #eee' }}>
-                                    <td style={{ padding: '0.5rem' }}>{a.asset?.assetTag}</td>
-                                    <td style={{ padding: '0.5rem' }}>{a.personnel?.fullName} ({a.personnel?.employeeNumber})</td>
-                                    <td style={{ padding: '0.5rem' }}>{new Date(a.assignedDate).toLocaleString()}</td>
-                                    <td style={{ padding: '0.5rem' }}>
-                                        <span style={{ 
-                                            padding: '0.2rem 0.5rem', borderRadius: '4px', fontSize: '0.8rem',
-                                            background: a.status === 'ACTIVE' ? '#d4edda' : a.status === 'RETURNED' ? '#cce5ff' : '#f8d7da',
-                                            color: a.status === 'ACTIVE' ? '#155724' : a.status === 'RETURNED' ? '#004085' : '#721c24'
-                                        }}>
-                                            {a.status}
-                                        </span>
-                                    </td>
-                                    <td style={{ padding: '0.5rem' }}>
-                                        <button onClick={() => setSelectedAssignment(a)} style={{ marginRight: '0.5rem' }}>View</button>
-                                        {a.status === 'ACTIVE' && (
-                                            <>
-                                                <button onClick={() => handleAction(a.assignmentId, 'return')} style={{ marginRight: '0.5rem', color: 'blue' }}>Return</button>
-                                                {role === 'ADMIN' && (
-                                                    <button onClick={() => handleAction(a.assignmentId, 'cancel')} style={{ color: 'red' }}>Cancel</button>
-                                                )}
-                                            </>
-                                        )}
-                                    </td>
+            <div className="table-container">
+                {loading ? (
+                    <div className="loading-container" style={{ minHeight: '300px' }}>
+                        <div className="spinner"></div>
+                        <span>Loading assignments...</span>
+                    </div>
+                ) : assignments.length === 0 ? (
+                    <div className="empty-state" style={{ border: 'none' }}>
+                        <div className="empty-icon">
+                            <ClipboardList size={32} />
+                        </div>
+                        <h3>No assignments found</h3>
+                        <p>No assignment records match your current filter criteria.</p>
+                        <Link to="/assignments/new" className="btn-secondary" style={{ marginTop: '16px', textDecoration: 'none' }}>
+                            Create First Assignment
+                        </Link>
+                    </div>
+                ) : (
+                    <div style={{ overflowX: 'auto' }}>
+                        <table className="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Asset Tag</th>
+                                    <th>Personnel</th>
+                                    <th>Assigned Date</th>
+                                    <th>Status</th>
+                                    <th style={{ textAlign: 'right' }}>Actions</th>
                                 </tr>
-                            ))
-                        )}
-                    </tbody>
-                </table>
+                            </thead>
+                            <tbody>
+                                {assignments.map(a => (
+                                    <tr key={a.assignmentId}>
+                                        <td>
+                                            <span style={{ fontFamily: 'monospace', fontWeight: 600 }}>{a.asset?.assetTag}</span>
+                                        </td>
+                                        <td>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                <div style={{ width: '24px', height: '24px', borderRadius: '50%', background: '#e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                                    <User size={14} color="#64748b" />
+                                                </div>
+                                                <div>
+                                                    <div style={{ fontWeight: 500, fontSize: '14px' }}>{a.personnel?.fullName}</div>
+                                                    <div style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>{a.personnel?.employeeNumber}</div>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>{new Date(a.assignedDate).toLocaleString()}</td>
+                                        <td>
+                                            <span className={`badge ${getStatusBadgeClass(a.status)}`}>
+                                                {a.status}
+                                            </span>
+                                        </td>
+                                        <td style={{ textAlign: 'right' }}>
+                                            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
+                                                <button onClick={() => setSelectedAssignment(a)} className="icon-btn" title="View Details">
+                                                    <Eye size={16} />
+                                                </button>
+                                                {a.status === 'ACTIVE' && (
+                                                    <>
+                                                        <button onClick={() => handleAction(a.assignmentId, 'return')} className="icon-btn" style={{ color: '#0284c7' }} title="Mark Returned">
+                                                            <ArrowDownToLine size={16} />
+                                                        </button>
+                                                        {role === 'ADMIN' && (
+                                                            <button onClick={() => handleAction(a.assignmentId, 'cancel')} className="icon-btn" style={{ color: 'var(--danger)' }} title="Cancel">
+                                                                <XCircle size={16} />
+                                                            </button>
+                                                        )}
+                                                    </>
+                                                )}
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                )}
             </div>
             
-            <div className="pagination" style={{ marginTop: '1rem', display: 'flex', gap: '0.5rem' }}>
-                <button disabled={page === 0} onClick={() => setPage(page - 1)}>Previous</button>
-                <span>Page {page + 1} of {totalPages === 0 ? 1 : totalPages}</span>
-                <button disabled={page >= totalPages - 1} onClick={() => setPage(page + 1)}>Next</button>
-            </div>
+            {!loading && totalPages > 1 && (
+                <div className="pagination" style={{ 
+                    display: 'flex', 
+                    justifyContent: 'flex-end', 
+                    alignItems: 'center', 
+                    gap: '16px', 
+                    marginTop: '24px' 
+                }}>
+                    <span style={{ fontSize: '14px', color: 'var(--text-secondary)' }}>
+                        Page {page + 1} of {totalPages}
+                    </span>
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                        <button 
+                            onClick={() => setPage(p => Math.max(0, p - 1))} 
+                            disabled={page === 0}
+                            className="btn-secondary"
+                            style={{ padding: '8px' }}
+                        >
+                            <ChevronLeft size={16} />
+                        </button>
+                        <button 
+                            onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))} 
+                            disabled={page >= totalPages - 1}
+                            className="btn-secondary"
+                            style={{ padding: '8px' }}
+                        >
+                            <ChevronRight size={16} />
+                        </button>
+                    </div>
+                </div>
+            )}
 
             {selectedAssignment && (
-                <div className="modal-overlay" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-                    <div className="modal-content" style={{ background: '#fff', padding: '2rem', borderRadius: '8px', width: '100%', maxWidth: '500px' }}>
-                        <h3>Assignment Details</h3>
-                        <div style={{ marginBottom: '1rem' }}>
-                            <p><strong>Asset:</strong> {selectedAssignment.asset?.assetTag}</p>
-                            <p><strong>Personnel:</strong> {selectedAssignment.personnel?.fullName} ({selectedAssignment.personnel?.employeeNumber})</p>
-                            <p><strong>Base:</strong> {selectedAssignment.personnel?.base?.baseName}</p>
-                            <p><strong>Assigned:</strong> {new Date(selectedAssignment.assignedDate).toLocaleString()}</p>
-                            <p><strong>Returned:</strong> {selectedAssignment.returnedDate ? new Date(selectedAssignment.returnedDate).toLocaleString() : 'N/A'}</p>
-                            <p><strong>Status:</strong> {selectedAssignment.status}</p>
-                            <p><strong>Notes:</strong> {selectedAssignment.notes}</p>
-                            <p><strong>Assigned By:</strong> {selectedAssignment.assignedByUsername}</p>
+                <div className="modal-overlay" onClick={() => setSelectedAssignment(null)}>
+                    <div className="modal-content" onClick={e => e.stopPropagation()}>
+                        <div className="modal-header">
+                            <h2>Assignment Details</h2>
+                            <button className="close-btn" onClick={() => setSelectedAssignment(null)}>
+                                <X size={20} />
+                            </button>
                         </div>
-
-                        <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                        <div className="modal-body">
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                                    <div>
+                                        <p style={{ margin: '0 0 4px 0', fontSize: '12px', color: 'var(--text-secondary)' }}>Asset Tag</p>
+                                        <p style={{ margin: 0, fontWeight: 600, fontFamily: 'monospace' }}>{selectedAssignment.asset?.assetTag}</p>
+                                    </div>
+                                    <div>
+                                        <p style={{ margin: '0 0 4px 0', fontSize: '12px', color: 'var(--text-secondary)' }}>Status</p>
+                                        <span className={`badge ${getStatusBadgeClass(selectedAssignment.status)}`}>
+                                            {selectedAssignment.status}
+                                        </span>
+                                    </div>
+                                    <div>
+                                        <p style={{ margin: '0 0 4px 0', fontSize: '12px', color: 'var(--text-secondary)' }}>Assigned To</p>
+                                        <p style={{ margin: 0, fontWeight: 500 }}>{selectedAssignment.personnel?.fullName}</p>
+                                        <p style={{ margin: 0, fontSize: '12px', color: 'var(--text-secondary)' }}>{selectedAssignment.personnel?.employeeNumber}</p>
+                                    </div>
+                                    <div>
+                                        <p style={{ margin: '0 0 4px 0', fontSize: '12px', color: 'var(--text-secondary)' }}>Base</p>
+                                        <p style={{ margin: 0 }}>{selectedAssignment.personnel?.base?.baseName}</p>
+                                    </div>
+                                </div>
+                                
+                                <div style={{ height: '1px', background: 'var(--border-color)' }}></div>
+                                
+                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                                    <div>
+                                        <p style={{ margin: '0 0 4px 0', fontSize: '12px', color: 'var(--text-secondary)' }}>Assigned Date</p>
+                                        <p style={{ margin: 0 }}>{new Date(selectedAssignment.assignedDate).toLocaleString()}</p>
+                                    </div>
+                                    <div>
+                                        <p style={{ margin: '0 0 4px 0', fontSize: '12px', color: 'var(--text-secondary)' }}>Returned Date</p>
+                                        <p style={{ margin: 0 }}>{selectedAssignment.returnedDate ? new Date(selectedAssignment.returnedDate).toLocaleString() : 'N/A'}</p>
+                                    </div>
+                                </div>
+                                
+                                <div style={{ height: '1px', background: 'var(--border-color)' }}></div>
+                                
+                                <div>
+                                    <p style={{ margin: '0 0 4px 0', fontSize: '12px', color: 'var(--text-secondary)' }}>Notes</p>
+                                    <p style={{ margin: 0, padding: '12px', background: '#f8fafc', borderRadius: '6px', fontSize: '14px' }}>
+                                        {selectedAssignment.notes || 'No notes provided.'}
+                                    </p>
+                                </div>
+                                
+                                <div>
+                                    <p style={{ margin: '0 0 4px 0', fontSize: '12px', color: 'var(--text-secondary)' }}>Assigned By</p>
+                                    <p style={{ margin: 0, fontSize: '14px' }}>{selectedAssignment.assignedByUsername}</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div className="modal-footer">
                             <button onClick={() => setSelectedAssignment(null)} className="btn-primary">Close</button>
                         </div>
                     </div>

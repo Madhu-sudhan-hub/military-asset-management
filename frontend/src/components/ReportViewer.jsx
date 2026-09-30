@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { reportService } from '../services/reportService';
+import { Download, Filter, Search, FileX, ChevronLeft, ChevronRight } from 'lucide-react';
 
 const ReportViewer = ({ title, columns, fetchFn, exportCsvFn, exportExcelFn, filterFields }) => {
     const [data, setData] = useState([]);
@@ -73,75 +74,130 @@ const ReportViewer = ({ title, columns, fetchFn, exportCsvFn, exportExcelFn, fil
     };
 
     return (
-        <div className="report-viewer" style={{ marginTop: '2rem' }}>
-            <h3>{title}</h3>
-            
+        <div className="report-viewer">
             {filterFields && filterFields.length > 0 && (
-                <div className="filters" style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', marginBottom: '1.5rem', background: '#f8f9fa', padding: '1rem', borderRadius: '8px', alignItems: 'flex-end' }}>
-                    {filterFields.map(f => (
-                        <div key={f.name}>
-                            <label style={{ display: 'block', fontSize: '0.8rem', color: '#6c757d', marginBottom: '0.2rem' }}>{f.label}</label>
-                            {f.type === 'select' ? (
-                                <select name={f.name} value={filters[f.name] || ''} onChange={handleFilterChange} className="form-control">
-                                    <option value="">All</option>
-                                    {f.options.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-                                </select>
-                            ) : (
-                                <input type={f.type || 'text'} name={f.name} value={filters[f.name] || ''} onChange={handleFilterChange} className="form-control" placeholder={f.placeholder} />
-                            )}
+                <div className="filter-card card" style={{ marginBottom: '24px' }}>
+                    <div className="filter-header">
+                        <h3><Filter size={18} /> Report Filters</h3>
+                    </div>
+                    <div className="filter-grid">
+                        {filterFields.map(f => (
+                            <div className="form-group" key={f.name}>
+                                <label>{f.label}</label>
+                                {f.type === 'select' ? (
+                                    <select name={f.name} value={filters[f.name] || ''} onChange={handleFilterChange} className="form-control">
+                                        <option value="">All</option>
+                                        {f.options?.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+                                    </select>
+                                ) : (
+                                    <div className="input-with-icon">
+                                        {f.name === 'search' && <Search size={16} className="search-icon" style={{ position: 'absolute', left: '10px', top: '10px', color: '#94a3b8' }} />}
+                                        <input 
+                                            type={f.type || 'text'} 
+                                            name={f.name} 
+                                            value={filters[f.name] || ''} 
+                                            onChange={handleFilterChange} 
+                                            className="form-control" 
+                                            placeholder={f.placeholder}
+                                            style={f.name === 'search' ? { paddingLeft: '32px' } : {}}
+                                        />
+                                    </div>
+                                )}
+                            </div>
+                        ))}
+                        <div className="filter-actions" style={{ gap: '12px' }}>
+                            <button onClick={resetFilters} className="btn-secondary">Reset</button>
+                            <button onClick={applyFilters} className="btn-primary">Apply Filters</button>
                         </div>
-                    ))}
-                    <div style={{ display: 'flex', gap: '0.5rem' }}>
-                        <button onClick={applyFilters} className="btn-primary" style={{ padding: '0.5rem 1rem' }}>Apply Filters</button>
-                        <button onClick={resetFilters} style={{ background: '#6c757d', color: 'white', border: 'none', padding: '0.5rem 1rem', borderRadius: '4px', cursor: 'pointer' }}>Reset</button>
                     </div>
                 </div>
             )}
 
-            <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem' }}>
-                {exportCsvFn && <button onClick={() => handleExport('csv')} className="btn-secondary">Export CSV</button>}
-                {exportExcelFn && <button onClick={() => handleExport('excel')} className="btn-secondary">Export Excel</button>}
+            <div className="page-actions">
+                <div style={{ display: 'flex', gap: '12px' }}>
+                    {exportCsvFn && (
+                        <button onClick={() => handleExport('csv')} className="btn-secondary">
+                            <Download size={16} /> Export CSV
+                        </button>
+                    )}
+                    {exportExcelFn && (
+                        <button onClick={() => handleExport('excel')} className="btn-secondary">
+                            <Download size={16} /> Export Excel
+                        </button>
+                    )}
+                </div>
             </div>
 
             {error && <div className="alert error">{error}</div>}
             {exportError && <div className="alert error">{exportError}</div>}
 
-            {loading ? (
-                <div style={{ textAlign: 'center', padding: '3rem' }}>
-                    <h4>Loading...</h4>
-                </div>
-            ) : data.length === 0 ? (
-                <div style={{ textAlign: 'center', padding: '3rem', background: '#f8f9fa', borderRadius: '8px' }}>
-                    <p style={{ color: '#6c757d' }}>No records found for the selected filters.</p>
-                </div>
-            ) : (
-                <div className="table-responsive">
-                    <table className="data-table">
-                        <thead>
-                            <tr>
-                                {columns.map((col, idx) => (
-                                    <th key={idx}>{col.label}</th>
-                                ))}
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {data.map((row, rIdx) => (
-                                <tr key={rIdx}>
-                                    {columns.map((col, cIdx) => (
-                                        <td key={cIdx}>{col.render ? col.render(row) : row[col.key]}</td>
+            <div className="table-container">
+                {loading ? (
+                    <div className="loading-container" style={{ minHeight: '300px' }}>
+                        <div className="spinner"></div>
+                        <span>Loading report data...</span>
+                    </div>
+                ) : data.length === 0 ? (
+                    <div className="empty-state" style={{ border: 'none' }}>
+                        <div className="empty-icon">
+                            <FileX size={32} />
+                        </div>
+                        <h3>No records found</h3>
+                        <p>No data matches your current filter criteria.</p>
+                    </div>
+                ) : (
+                    <div style={{ overflowX: 'auto' }}>
+                        <table className="data-table">
+                            <thead>
+                                <tr>
+                                    {columns.map((col, idx) => (
+                                        <th key={idx}>{col.label}</th>
                                     ))}
                                 </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
-            )}
+                            </thead>
+                            <tbody>
+                                {data.map((row, rIdx) => (
+                                    <tr key={rIdx}>
+                                        {columns.map((col, cIdx) => (
+                                            <td key={cIdx}>{col.render ? col.render(row) : row[col.key]}</td>
+                                        ))}
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                )}
+            </div>
 
             {!loading && totalPages > 1 && (
-                <div className="pagination" style={{ display: 'flex', justifyContent: 'center', gap: '1rem', marginTop: '1.5rem' }}>
-                    <button onClick={() => setPage(p => Math.max(0, p - 1))} disabled={page === 0}>Previous</button>
-                    <span>Page {page + 1} of {totalPages}</span>
-                    <button onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))} disabled={page === totalPages - 1}>Next</button>
+                <div className="pagination" style={{ 
+                    display: 'flex', 
+                    justifyContent: 'flex-end', 
+                    alignItems: 'center', 
+                    gap: '16px', 
+                    marginTop: '24px' 
+                }}>
+                    <span style={{ fontSize: '14px', color: 'var(--text-secondary)' }}>
+                        Page {page + 1} of {totalPages}
+                    </span>
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                        <button 
+                            onClick={() => setPage(p => Math.max(0, p - 1))} 
+                            disabled={page === 0}
+                            className="btn-secondary"
+                            style={{ padding: '8px' }}
+                        >
+                            <ChevronLeft size={16} />
+                        </button>
+                        <button 
+                            onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))} 
+                            disabled={page === totalPages - 1}
+                            className="btn-secondary"
+                            style={{ padding: '8px' }}
+                        >
+                            <ChevronRight size={16} />
+                        </button>
+                    </div>
                 </div>
             )}
         </div>

@@ -3,6 +3,15 @@ import { Link } from 'react-router-dom';
 import { expenditureService } from '../services/expenditureService';
 import { baseService, equipmentTypeService } from '../services/dataService';
 import { AuthContext } from '../context/AuthContext';
+import { 
+    Banknote, 
+    Plus, 
+    Filter, 
+    Search,
+    ChevronLeft,
+    ChevronRight,
+    FileMinus
+} from 'lucide-react';
 
 const Expenditures = () => {
     const { role } = useContext(AuthContext);
@@ -67,73 +76,163 @@ const Expenditures = () => {
         setPage(0);
     };
 
+    const resetFilters = () => {
+        setFilters({
+            baseId: '',
+            equipmentTypeId: '',
+            assetId: '',
+            reason: '',
+            startDate: '',
+            endDate: ''
+        });
+        setPage(0);
+    };
+
     return (
-        <div className="page-content">
-            <div className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-                <h2>Equipment Expenditures</h2>
-                <Link to="/expenditures/new" className="btn-primary">+ Record Expenditure</Link>
+        <div className="page-content-wrapper">
+            <div className="page-actions">
+                <div></div>
+                <Link to="/expenditures/new" className="btn-primary" style={{ textDecoration: 'none' }}>
+                    <Plus size={16} /> Record Expenditure
+                </Link>
             </div>
 
             {error && <div className="alert error">{error}</div>}
 
-            <div className="filters" style={{ display: 'flex', gap: '1rem', marginBottom: '1rem', flexWrap: 'wrap' }}>
-                {role === 'ADMIN' && (
-                    <select name="baseId" value={filters.baseId} onChange={handleFilterChange} className="form-control">
-                        <option value="">All Bases</option>
-                        {bases.map(b => <option key={b.baseId} value={b.baseId}>{b.baseName}</option>)}
-                    </select>
-                )}
-                <select name="equipmentTypeId" value={filters.equipmentTypeId} onChange={handleFilterChange} className="form-control">
-                    <option value="">All Equipment</option>
-                    {equipmentTypes.map(e => <option key={e.equipmentTypeId} value={e.equipmentTypeId}>{e.equipmentName}</option>)}
-                </select>
-                <input type="datetime-local" name="startDate" value={filters.startDate} onChange={handleFilterChange} className="form-control" />
-                <input type="datetime-local" name="endDate" value={filters.endDate} onChange={handleFilterChange} className="form-control" />
-                <input type="text" name="reason" value={filters.reason} onChange={handleFilterChange} className="form-control" placeholder="Search Reason..." />
+            <div className="filter-card card" style={{ marginBottom: '24px' }}>
+                <div className="filter-header">
+                    <h3><Filter size={18} /> Expenditure Filters</h3>
+                </div>
+                <div className="filter-grid">
+                    {role === 'ADMIN' && (
+                        <div className="form-group">
+                            <label>Base Location</label>
+                            <select name="baseId" value={filters.baseId} onChange={handleFilterChange} className="form-control">
+                                <option value="">All Bases</option>
+                                {bases.map(b => <option key={b.baseId} value={b.baseId}>{b.baseName}</option>)}
+                            </select>
+                        </div>
+                    )}
+                    <div className="form-group">
+                        <label>Equipment Type</label>
+                        <select name="equipmentTypeId" value={filters.equipmentTypeId} onChange={handleFilterChange} className="form-control">
+                            <option value="">All Equipment</option>
+                            {equipmentTypes.map(e => <option key={e.equipmentTypeId} value={e.equipmentTypeId}>{e.equipmentName}</option>)}
+                        </select>
+                    </div>
+                    <div className="form-group">
+                        <label>Start Date</label>
+                        <input type="datetime-local" name="startDate" value={filters.startDate} onChange={handleFilterChange} className="form-control" />
+                    </div>
+                    <div className="form-group">
+                        <label>End Date</label>
+                        <input type="datetime-local" name="endDate" value={filters.endDate} onChange={handleFilterChange} className="form-control" />
+                    </div>
+                    <div className="form-group">
+                        <label>Search Reason</label>
+                        <div className="input-with-icon">
+                            <Search size={16} className="search-icon" style={{ position: 'absolute', left: '10px', top: '10px', color: '#94a3b8' }} />
+                            <input type="text" name="reason" value={filters.reason} onChange={handleFilterChange} className="form-control" placeholder="Search..." style={{ paddingLeft: '32px' }} />
+                        </div>
+                    </div>
+                    <div className="filter-actions" style={{ gridColumn: '1 / -1' }}>
+                        <button onClick={resetFilters} className="btn-secondary">Reset Filters</button>
+                    </div>
+                </div>
             </div>
 
-            <div className="table-responsive" style={{ overflowX: 'auto' }}>
-                <table className="data-table" style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
-                    <thead>
-                        <tr style={{ borderBottom: '2px solid #ccc' }}>
-                            <th style={{ padding: '0.5rem' }}>Ref #</th>
-                            <th style={{ padding: '0.5rem' }}>Base</th>
-                            <th style={{ padding: '0.5rem' }}>Equipment</th>
-                            <th style={{ padding: '0.5rem' }}>Asset Tag</th>
-                            <th style={{ padding: '0.5rem' }}>Qty</th>
-                            <th style={{ padding: '0.5rem' }}>Date</th>
-                            <th style={{ padding: '0.5rem' }}>Reason</th>
-                            <th style={{ padding: '0.5rem' }}>Recorded By</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {loading ? (
-                            <tr><td colSpan="8" style={{ textAlign: 'center', padding: '1rem' }}>Loading...</td></tr>
-                        ) : expenditures.length === 0 ? (
-                            <tr><td colSpan="8" style={{ textAlign: 'center', padding: '1rem' }}>No expenditures found.</td></tr>
-                        ) : (
-                            expenditures.map(e => (
-                                <tr key={e.expenditureId} style={{ borderBottom: '1px solid #eee' }}>
-                                    <td style={{ padding: '0.5rem' }}>{e.referenceNumber}</td>
-                                    <td style={{ padding: '0.5rem' }}>{e.base?.baseName}</td>
-                                    <td style={{ padding: '0.5rem' }}>{e.equipmentType?.equipmentName}</td>
-                                    <td style={{ padding: '0.5rem' }}>{e.asset ? e.asset.assetTag : 'N/A (Bulk)'}</td>
-                                    <td style={{ padding: '0.5rem' }}>{e.quantity}</td>
-                                    <td style={{ padding: '0.5rem' }}>{new Date(e.expenditureDate).toLocaleString()}</td>
-                                    <td style={{ padding: '0.5rem' }}>{e.reason}</td>
-                                    <td style={{ padding: '0.5rem' }}>{e.recordedByUsername}</td>
+            <div className="table-container">
+                {loading ? (
+                    <div className="loading-container" style={{ minHeight: '300px' }}>
+                        <div className="spinner"></div>
+                        <span>Loading expenditures...</span>
+                    </div>
+                ) : expenditures.length === 0 ? (
+                    <div className="empty-state" style={{ border: 'none' }}>
+                        <div className="empty-icon">
+                            <FileMinus size={32} />
+                        </div>
+                        <h3>No expenditures found</h3>
+                        <p>No expenditure records match your current filter criteria.</p>
+                        <Link to="/expenditures/new" className="btn-secondary" style={{ marginTop: '16px', textDecoration: 'none' }}>
+                            Record First Expenditure
+                        </Link>
+                    </div>
+                ) : (
+                    <div style={{ overflowX: 'auto' }}>
+                        <table className="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Ref #</th>
+                                    <th>Base</th>
+                                    <th>Equipment</th>
+                                    <th>Asset Tag</th>
+                                    <th>Qty</th>
+                                    <th>Date</th>
+                                    <th>Reason</th>
+                                    <th>Recorded By</th>
                                 </tr>
-                            ))
-                        )}
-                    </tbody>
-                </table>
+                            </thead>
+                            <tbody>
+                                {expenditures.map(e => (
+                                    <tr key={e.expenditureId}>
+                                        <td><span style={{ fontFamily: 'monospace', fontWeight: 600 }}>{e.referenceNumber}</span></td>
+                                        <td>
+                                            <span className="badge badge-base">{e.base?.baseCode}</span>
+                                        </td>
+                                        <td>{e.equipmentType?.equipmentName}</td>
+                                        <td>
+                                            {e.asset ? (
+                                                <span style={{ fontFamily: 'monospace', fontWeight: 600 }}>{e.asset.assetTag}</span>
+                                            ) : (
+                                                <span style={{ color: 'var(--text-secondary)' }}>N/A (Bulk)</span>
+                                            )}
+                                        </td>
+                                        <td style={{ fontWeight: 600, color: 'var(--danger)' }}>-{e.quantity}</td>
+                                        <td>{new Date(e.expenditureDate).toLocaleString()}</td>
+                                        <td style={{ maxWidth: '200px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title={e.reason}>
+                                            {e.reason}
+                                        </td>
+                                        <td>{e.recordedByUsername}</td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                )}
             </div>
             
-            <div className="pagination" style={{ marginTop: '1rem', display: 'flex', gap: '0.5rem' }}>
-                <button disabled={page === 0} onClick={() => setPage(page - 1)}>Previous</button>
-                <span>Page {page + 1} of {totalPages === 0 ? 1 : totalPages}</span>
-                <button disabled={page >= totalPages - 1} onClick={() => setPage(page + 1)}>Next</button>
-            </div>
+            {!loading && totalPages > 1 && (
+                <div className="pagination" style={{ 
+                    display: 'flex', 
+                    justifyContent: 'flex-end', 
+                    alignItems: 'center', 
+                    gap: '16px', 
+                    marginTop: '24px' 
+                }}>
+                    <span style={{ fontSize: '14px', color: 'var(--text-secondary)' }}>
+                        Page {page + 1} of {totalPages}
+                    </span>
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                        <button 
+                            onClick={() => setPage(p => Math.max(0, p - 1))} 
+                            disabled={page === 0}
+                            className="btn-secondary"
+                            style={{ padding: '8px' }}
+                        >
+                            <ChevronLeft size={16} />
+                        </button>
+                        <button 
+                            onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))} 
+                            disabled={page >= totalPages - 1}
+                            className="btn-secondary"
+                            style={{ padding: '8px' }}
+                        >
+                            <ChevronRight size={16} />
+                        </button>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

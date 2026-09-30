@@ -3,6 +3,18 @@ import { Link } from 'react-router-dom';
 import { transferService } from '../services/transferService';
 import { baseService, equipmentTypeService } from '../services/dataService';
 import { AuthContext } from '../context/AuthContext';
+import { 
+    ArrowRightLeft, 
+    Plus, 
+    Filter, 
+    Eye, 
+    CheckCircle, 
+    XCircle,
+    X,
+    ChevronLeft,
+    ChevronRight,
+    ArrowRight
+} from 'lucide-react';
 
 const Transfers = () => {
     const { role } = useContext(AuthContext);
@@ -68,6 +80,17 @@ const Transfers = () => {
         setPage(0);
     };
 
+    const resetFilters = () => {
+        setFilters({
+            fromBaseId: '',
+            toBaseId: '',
+            status: '',
+            startDate: '',
+            endDate: ''
+        });
+        setPage(0);
+    };
+
     const handleAction = async (id, action) => {
         if (!window.confirm(`Are you sure you want to ${action} this transfer?`)) return;
         try {
@@ -85,124 +108,236 @@ const Transfers = () => {
         }
     };
 
+    const getStatusBadgeClass = (status) => {
+        switch(status) {
+            case 'COMPLETED': return 'badge-active';
+            case 'PENDING': return 'badge-pending';
+            case 'CANCELLED': return 'badge-expended';
+            default: return 'badge-inactive';
+        }
+    };
+
     return (
-        <div className="page-content">
-            <div className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-                <h2>Equipment Transfers</h2>
-                <Link to="/transfers/new" className="btn-primary">+ New Transfer</Link>
+        <div className="page-content-wrapper">
+            <div className="page-actions">
+                <div></div>
+                <Link to="/transfers/new" className="btn-primary" style={{ textDecoration: 'none' }}>
+                    <Plus size={16} /> New Transfer
+                </Link>
             </div>
 
             {error && <div className="alert error">{error}</div>}
 
-            <div className="filters" style={{ display: 'flex', gap: '1rem', marginBottom: '1rem', flexWrap: 'wrap' }}>
-                <select name="fromBaseId" value={filters.fromBaseId} onChange={handleFilterChange} className="form-control">
-                    <option value="">From Base (All)</option>
-                    {bases.map(b => <option key={b.baseId} value={b.baseId}>{b.baseName}</option>)}
-                </select>
-                <select name="toBaseId" value={filters.toBaseId} onChange={handleFilterChange} className="form-control">
-                    <option value="">To Base (All)</option>
-                    {bases.map(b => <option key={b.baseId} value={b.baseId}>{b.baseName}</option>)}
-                </select>
-                <select name="status" value={filters.status} onChange={handleFilterChange} className="form-control">
-                    <option value="">All Statuses</option>
-                    <option value="PENDING">PENDING</option>
-                    <option value="COMPLETED">COMPLETED</option>
-                    <option value="CANCELLED">CANCELLED</option>
-                </select>
-                <input type="datetime-local" name="startDate" value={filters.startDate} onChange={handleFilterChange} className="form-control" />
-                <input type="datetime-local" name="endDate" value={filters.endDate} onChange={handleFilterChange} className="form-control" />
+            <div className="filter-card card" style={{ marginBottom: '24px' }}>
+                <div className="filter-header">
+                    <h3><Filter size={18} /> Transfer Filters</h3>
+                </div>
+                <div className="filter-grid">
+                    <div className="form-group">
+                        <label>From Base</label>
+                        <select name="fromBaseId" value={filters.fromBaseId} onChange={handleFilterChange} className="form-control">
+                            <option value="">All Bases</option>
+                            {bases.map(b => <option key={b.baseId} value={b.baseId}>{b.baseName}</option>)}
+                        </select>
+                    </div>
+                    <div className="form-group">
+                        <label>To Base</label>
+                        <select name="toBaseId" value={filters.toBaseId} onChange={handleFilterChange} className="form-control">
+                            <option value="">All Bases</option>
+                            {bases.map(b => <option key={b.baseId} value={b.baseId}>{b.baseName}</option>)}
+                        </select>
+                    </div>
+                    <div className="form-group">
+                        <label>Status</label>
+                        <select name="status" value={filters.status} onChange={handleFilterChange} className="form-control">
+                            <option value="">All Statuses</option>
+                            <option value="PENDING">PENDING</option>
+                            <option value="COMPLETED">COMPLETED</option>
+                            <option value="CANCELLED">CANCELLED</option>
+                        </select>
+                    </div>
+                    <div className="form-group">
+                        <label>Start Date</label>
+                        <input type="datetime-local" name="startDate" value={filters.startDate} onChange={handleFilterChange} className="form-control" />
+                    </div>
+                    <div className="form-group">
+                        <label>End Date</label>
+                        <input type="datetime-local" name="endDate" value={filters.endDate} onChange={handleFilterChange} className="form-control" />
+                    </div>
+                    <div className="filter-actions" style={{ gridColumn: '1 / -1' }}>
+                        <button onClick={resetFilters} className="btn-secondary">Reset Filters</button>
+                    </div>
+                </div>
             </div>
 
-            <div className="table-responsive" style={{ overflowX: 'auto' }}>
-                <table className="data-table" style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
-                    <thead>
-                        <tr style={{ borderBottom: '2px solid #ccc' }}>
-                            <th style={{ padding: '0.5rem' }}>Ref #</th>
-                            <th style={{ padding: '0.5rem' }}>Date</th>
-                            <th style={{ padding: '0.5rem' }}>From Base</th>
-                            <th style={{ padding: '0.5rem' }}>To Base</th>
-                            <th style={{ padding: '0.5rem' }}>Status</th>
-                            <th style={{ padding: '0.5rem' }}>Initiated By</th>
-                            <th style={{ padding: '0.5rem' }}>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {loading ? (
-                            <tr><td colSpan="7" style={{ textAlign: 'center', padding: '1rem' }}>Loading...</td></tr>
-                        ) : transfers.length === 0 ? (
-                            <tr><td colSpan="7" style={{ textAlign: 'center', padding: '1rem' }}>No transfers found.</td></tr>
-                        ) : (
-                            transfers.map(t => (
-                                <tr key={t.transferId} style={{ borderBottom: '1px solid #eee' }}>
-                                    <td style={{ padding: '0.5rem' }}>{t.referenceNumber}</td>
-                                    <td style={{ padding: '0.5rem' }}>{new Date(t.transferDate).toLocaleString()}</td>
-                                    <td style={{ padding: '0.5rem' }}>{t.fromBase?.baseName}</td>
-                                    <td style={{ padding: '0.5rem' }}>{t.toBase?.baseName}</td>
-                                    <td style={{ padding: '0.5rem' }}>
-                                        <span style={{ 
-                                            padding: '0.2rem 0.5rem', borderRadius: '4px', fontSize: '0.8rem',
-                                            background: t.status === 'COMPLETED' ? '#d4edda' : t.status === 'PENDING' ? '#fff3cd' : '#f8d7da',
-                                            color: t.status === 'COMPLETED' ? '#155724' : t.status === 'PENDING' ? '#856404' : '#721c24'
-                                        }}>
-                                            {t.status}
-                                        </span>
-                                    </td>
-                                    <td style={{ padding: '0.5rem' }}>{t.initiatedByUsername}</td>
-                                    <td style={{ padding: '0.5rem' }}>
-                                        <button onClick={() => setSelectedTransfer(t)} style={{ marginRight: '0.5rem' }}>View</button>
-                                        {t.status === 'PENDING' && (
-                                            <>
-                                                <button onClick={() => handleAction(t.transferId, 'complete')} style={{ marginRight: '0.5rem', color: 'green' }}>Complete</button>
-                                                <button onClick={() => handleAction(t.transferId, 'cancel')} style={{ color: 'red' }}>Cancel</button>
-                                            </>
-                                        )}
-                                    </td>
-                                </tr>
-                            ))
-                        )}
-                    </tbody>
-                </table>
-            </div>
-            
-            <div className="pagination" style={{ marginTop: '1rem', display: 'flex', gap: '0.5rem' }}>
-                <button disabled={page === 0} onClick={() => setPage(page - 1)}>Previous</button>
-                <span>Page {page + 1} of {totalPages === 0 ? 1 : totalPages}</span>
-                <button disabled={page >= totalPages - 1} onClick={() => setPage(page + 1)}>Next</button>
-            </div>
-
-            {selectedTransfer && (
-                <div className="modal-overlay" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-                    <div className="modal-content" style={{ background: '#fff', padding: '2rem', borderRadius: '8px', width: '100%', maxWidth: '600px' }}>
-                        <h3>Transfer Details</h3>
-                        <div style={{ marginBottom: '1rem' }}>
-                            <p><strong>Ref:</strong> {selectedTransfer.referenceNumber}</p>
-                            <p><strong>From:</strong> {selectedTransfer.fromBase?.baseName}</p>
-                            <p><strong>To:</strong> {selectedTransfer.toBase?.baseName}</p>
-                            <p><strong>Status:</strong> {selectedTransfer.status}</p>
+            <div className="table-container">
+                {loading ? (
+                    <div className="loading-container" style={{ minHeight: '300px' }}>
+                        <div className="spinner"></div>
+                        <span>Loading transfers...</span>
+                    </div>
+                ) : transfers.length === 0 ? (
+                    <div className="empty-state" style={{ border: 'none' }}>
+                        <div className="empty-icon">
+                            <ArrowRightLeft size={32} />
                         </div>
-                        
-                        <h4>Items</h4>
-                        <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', marginBottom: '1.5rem' }}>
+                        <h3>No transfers found</h3>
+                        <p>No transfer records match your current filter criteria.</p>
+                        <Link to="/transfers/new" className="btn-secondary" style={{ marginTop: '16px', textDecoration: 'none' }}>
+                            Create First Transfer
+                        </Link>
+                    </div>
+                ) : (
+                    <div style={{ overflowX: 'auto' }}>
+                        <table className="data-table">
                             <thead>
-                                <tr style={{ borderBottom: '1px solid #ccc' }}>
-                                    <th>Equipment</th>
-                                    <th>Asset Tag</th>
-                                    <th>Quantity</th>
+                                <tr>
+                                    <th>Ref #</th>
+                                    <th>Date</th>
+                                    <th>Route</th>
+                                    <th>Status</th>
+                                    <th>Initiated By</th>
+                                    <th style={{ textAlign: 'right' }}>Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                {selectedTransfer.items?.map(i => (
-                                    <tr key={i.transferItemId} style={{ borderBottom: '1px solid #eee' }}>
-                                        <td>{i.equipmentType?.equipmentName}</td>
-                                        <td>{i.asset ? i.asset.assetTag : 'N/A (Bulk)'}</td>
-                                        <td>{i.quantity}</td>
+                                {transfers.map(t => (
+                                    <tr key={t.transferId}>
+                                        <td><span style={{ fontFamily: 'monospace', fontWeight: 600 }}>{t.referenceNumber}</span></td>
+                                        <td>{new Date(t.transferDate).toLocaleString()}</td>
+                                        <td>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                <span className="badge badge-base">{t.fromBase?.baseCode}</span>
+                                                <ArrowRight size={14} color="var(--text-secondary)" />
+                                                <span className="badge badge-base">{t.toBase?.baseCode}</span>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <span className={`badge ${getStatusBadgeClass(t.status)}`}>
+                                                {t.status}
+                                            </span>
+                                        </td>
+                                        <td>{t.initiatedByUsername}</td>
+                                        <td style={{ textAlign: 'right' }}>
+                                            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
+                                                <button onClick={() => setSelectedTransfer(t)} className="icon-btn" title="View Details">
+                                                    <Eye size={16} />
+                                                </button>
+                                                {t.status === 'PENDING' && (
+                                                    <>
+                                                        <button onClick={() => handleAction(t.transferId, 'complete')} className="icon-btn" style={{ color: 'var(--military-green)' }} title="Complete">
+                                                            <CheckCircle size={16} />
+                                                        </button>
+                                                        <button onClick={() => handleAction(t.transferId, 'cancel')} className="icon-btn" style={{ color: 'var(--danger)' }} title="Cancel">
+                                                            <XCircle size={16} />
+                                                        </button>
+                                                    </>
+                                                )}
+                                            </div>
+                                        </td>
                                     </tr>
                                 ))}
                             </tbody>
                         </table>
+                    </div>
+                )}
+            </div>
+            
+            {!loading && totalPages > 1 && (
+                <div className="pagination" style={{ 
+                    display: 'flex', 
+                    justifyContent: 'flex-end', 
+                    alignItems: 'center', 
+                    gap: '16px', 
+                    marginTop: '24px' 
+                }}>
+                    <span style={{ fontSize: '14px', color: 'var(--text-secondary)' }}>
+                        Page {page + 1} of {totalPages}
+                    </span>
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                        <button 
+                            onClick={() => setPage(p => Math.max(0, p - 1))} 
+                            disabled={page === 0}
+                            className="btn-secondary"
+                            style={{ padding: '8px' }}
+                        >
+                            <ChevronLeft size={16} />
+                        </button>
+                        <button 
+                            onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))} 
+                            disabled={page >= totalPages - 1}
+                            className="btn-secondary"
+                            style={{ padding: '8px' }}
+                        >
+                            <ChevronRight size={16} />
+                        </button>
+                    </div>
+                </div>
+            )}
 
-                        <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-                            <button onClick={() => setSelectedTransfer(null)} className="btn-primary">Close</button>
+            {selectedTransfer && (
+                <div className="modal-overlay" onClick={() => setSelectedTransfer(null)}>
+                    <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: '600px' }}>
+                        <div className="modal-header">
+                            <h2>Transfer Details</h2>
+                            <button className="close-btn" onClick={() => setSelectedTransfer(null)}>
+                                <X size={20} />
+                            </button>
+                        </div>
+                        <div className="modal-body">
+                            <div className="card" style={{ marginBottom: '24px', background: '#f8fafc' }}>
+                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                                    <div>
+                                        <p style={{ margin: '0 0 4px 0', fontSize: '12px', color: 'var(--text-secondary)' }}>Reference Number</p>
+                                        <p style={{ margin: 0, fontWeight: 600, fontFamily: 'monospace' }}>{selectedTransfer.referenceNumber}</p>
+                                    </div>
+                                    <div>
+                                        <p style={{ margin: '0 0 4px 0', fontSize: '12px', color: 'var(--text-secondary)' }}>Status</p>
+                                        <span className={`badge ${getStatusBadgeClass(selectedTransfer.status)}`}>
+                                            {selectedTransfer.status}
+                                        </span>
+                                    </div>
+                                    <div>
+                                        <p style={{ margin: '0 0 4px 0', fontSize: '12px', color: 'var(--text-secondary)' }}>From Base</p>
+                                        <p style={{ margin: 0, fontWeight: 500 }}>{selectedTransfer.fromBase?.baseName}</p>
+                                    </div>
+                                    <div>
+                                        <p style={{ margin: '0 0 4px 0', fontSize: '12px', color: 'var(--text-secondary)' }}>To Base</p>
+                                        <p style={{ margin: 0, fontWeight: 500 }}>{selectedTransfer.toBase?.baseName}</p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <h3 className="section-title">Transfer Items</h3>
+                            <div className="table-container">
+                                <table className="data-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Equipment</th>
+                                            <th>Asset Tag</th>
+                                            <th style={{ textAlign: 'right' }}>Quantity</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {selectedTransfer.items?.map(i => (
+                                            <tr key={i.transferItemId}>
+                                                <td>{i.equipmentType?.equipmentName}</td>
+                                                <td>
+                                                    {i.asset ? (
+                                                        <span style={{ fontFamily: 'monospace', fontWeight: 600 }}>{i.asset.assetTag}</span>
+                                                    ) : (
+                                                        <span style={{ color: 'var(--text-secondary)' }}>N/A (Bulk)</span>
+                                                    )}
+                                                </td>
+                                                <td style={{ textAlign: 'right', fontWeight: 600 }}>{i.quantity}</td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <div className="modal-footer">
+                            <button onClick={() => setSelectedTransfer(null)} className="btn-primary">Close Details</button>
                         </div>
                     </div>
                 </div>

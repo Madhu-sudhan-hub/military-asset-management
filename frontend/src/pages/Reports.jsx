@@ -1,6 +1,15 @@
 import React, { useState } from 'react';
 import ReportViewer from '../components/ReportViewer';
 import { reportService } from '../services/reportService';
+import { 
+    FileText, 
+    ShoppingCart, 
+    ArrowRightLeft, 
+    ClipboardList, 
+    Banknote, 
+    Package, 
+    ShieldAlert 
+} from 'lucide-react';
 
 const Reports = () => {
     const [activeReport, setActiveReport] = useState(null);
@@ -9,6 +18,7 @@ const Reports = () => {
         {
             id: 'inventory',
             title: 'Inventory Report',
+            icon: <Package size={24} />,
             fetchFn: reportService.getInventoryReport,
             exportCsvFn: reportService.exportInventory,
             exportExcelFn: reportService.exportInventory,
@@ -34,6 +44,7 @@ const Reports = () => {
         {
             id: 'purchases',
             title: 'Purchase Report',
+            icon: <ShoppingCart size={24} />,
             fetchFn: reportService.getPurchaseReport,
             exportCsvFn: reportService.exportPurchases,
             exportExcelFn: reportService.exportPurchases,
@@ -61,6 +72,7 @@ const Reports = () => {
         {
             id: 'transfers',
             title: 'Transfer Report',
+            icon: <ArrowRightLeft size={24} />,
             fetchFn: reportService.getTransferReport,
             exportCsvFn: reportService.exportTransfers,
             exportExcelFn: reportService.exportTransfers,
@@ -84,6 +96,7 @@ const Reports = () => {
         {
             id: 'assignments',
             title: 'Assignment Report',
+            icon: <ClipboardList size={24} />,
             fetchFn: reportService.getAssignmentReport,
             exportCsvFn: reportService.exportAssignments,
             exportExcelFn: reportService.exportAssignments,
@@ -107,6 +120,7 @@ const Reports = () => {
         {
             id: 'expenditures',
             title: 'Expenditure Report',
+            icon: <Banknote size={24} />,
             fetchFn: reportService.getExpenditureReport,
             exportCsvFn: reportService.exportExpenditures,
             exportExcelFn: reportService.exportExpenditures,
@@ -129,29 +143,9 @@ const Reports = () => {
             ]
         },
         {
-            id: 'assets',
-            title: 'Asset Report',
-            fetchFn: reportService.getAssetReport,
-            exportCsvFn: reportService.exportAssets,
-            filterFields: [
-                { name: 'baseId', label: 'Base ID', type: 'number' },
-                { name: 'equipmentTypeId', label: 'Eq. Type ID', type: 'number' },
-                { name: 'status', label: 'Status' },
-                { name: 'search', label: 'Search (Tag/Serial)' }
-            ],
-            columns: [
-                { label: 'ID', key: 'assetId' },
-                { label: 'Asset Tag', key: 'assetTag' },
-                { label: 'Serial Number', key: 'serialNumber' },
-                { label: 'Equipment', render: (row) => row.equipmentType?.equipmentName },
-                { label: 'Current Base', render: (row) => row.currentBase?.baseName },
-                { label: 'Status', key: 'status' },
-                { label: 'Acquisition Date', key: 'acquisitionDate' }
-            ]
-        },
-        {
             id: 'audit',
-            title: 'Audit Activity Report',
+            title: 'Audit Activity',
+            icon: <ShieldAlert size={24} />,
             fetchFn: reportService.getAuditReport,
             exportCsvFn: reportService.exportAuditActivity,
             filterFields: [
@@ -177,36 +171,54 @@ const Reports = () => {
     const currentConfig = reportConfigs.find(c => c.id === activeReport);
 
     return (
-        <div className="page-content">
-            <div className="page-header">
-                <h2>Reports</h2>
-            </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
             
-            <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', marginBottom: '2rem' }}>
-                {reportConfigs.map(config => (
-                    <div 
-                        key={config.id} 
-                        onClick={() => setActiveReport(config.id)}
-                        style={{
-                            padding: '1.5rem',
-                            background: activeReport === config.id ? '#007bff' : '#fff',
-                            color: activeReport === config.id ? '#fff' : '#333',
-                            border: '1px solid #ddd',
-                            borderRadius: '8px',
-                            cursor: 'pointer',
-                            minWidth: '200px',
-                            textAlign: 'center',
-                            boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
-                            transition: 'all 0.2s ease-in-out'
-                        }}
-                    >
-                        <h4 style={{ margin: 0 }}>{config.title}</h4>
-                    </div>
-                ))}
+            <div className="report-types-grid" style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
+                gap: '16px'
+            }}>
+                {reportConfigs.map(config => {
+                    const isActive = activeReport === config.id;
+                    return (
+                        <div 
+                            key={config.id} 
+                            onClick={() => setActiveReport(config.id)}
+                            className="card clickable"
+                            style={{
+                                display: 'flex',
+                                flexDirection: 'column',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                padding: '24px 16px',
+                                gap: '12px',
+                                background: isActive ? 'var(--primary-navy)' : 'white',
+                                color: isActive ? 'white' : 'var(--text-main)',
+                                borderColor: isActive ? 'var(--primary-navy)' : 'var(--border-color)',
+                                cursor: 'pointer',
+                                transition: 'all 0.2s'
+                            }}
+                        >
+                            <div style={{ 
+                                color: isActive ? 'var(--accent-green)' : 'var(--text-secondary)'
+                            }}>
+                                {config.icon}
+                            </div>
+                            <h4 style={{ 
+                                margin: 0, 
+                                fontSize: '14px', 
+                                color: isActive ? 'white' : 'var(--text-main)' 
+                            }}>
+                                {config.title}
+                            </h4>
+                        </div>
+                    );
+                })}
             </div>
 
             {currentConfig && (
-                <div style={{ borderTop: '2px solid #eee', paddingTop: '1rem' }}>
+                <div className="report-viewer-wrapper" style={{ animation: 'fadeIn 0.3s ease-in-out' }}>
+                    <h3 className="section-title" style={{ marginTop: '16px' }}>{currentConfig.title}</h3>
                     <ReportViewer {...currentConfig} />
                 </div>
             )}

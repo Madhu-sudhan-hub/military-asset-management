@@ -1,6 +1,16 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { purchaseService, baseService, equipmentTypeService } from '../services/dataService';
 import { AuthContext } from '../context/AuthContext';
+import { 
+    Plus, 
+    Filter, 
+    Edit, 
+    Trash2, 
+    X,
+    ChevronLeft,
+    ChevronRight,
+    ShoppingCart
+} from 'lucide-react';
 
 const Purchases = () => {
     const { role, baseId: userBaseId } = useContext(AuthContext);
@@ -81,6 +91,16 @@ const Purchases = () => {
     const handleFilterChange = (e) => {
         setFilters({ ...filters, [e.target.name]: e.target.value });
         setPage(0); // Reset to first page
+    };
+
+    const resetFilters = () => {
+        setFilters({
+            baseId: role === 'ADMIN' ? '' : userBaseId,
+            equipmentTypeId: '',
+            startDate: '',
+            endDate: ''
+        });
+        setPage(0);
     };
 
     const openCreateModal = () => {
@@ -164,139 +184,217 @@ const Purchases = () => {
     };
 
     return (
-        <div className="page-content">
-            <div className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-                <h2>Purchases</h2>
-                <button className="btn-primary" onClick={openCreateModal}>+ Add Purchase</button>
+        <div className="page-content-wrapper">
+            <div className="page-actions">
+                <div></div>
+                <button className="btn-primary" onClick={openCreateModal}>
+                    <Plus size={16} /> New Purchase
+                </button>
             </div>
 
             {error && <div className="alert error">{error}</div>}
 
-            <div className="filters" style={{ display: 'flex', gap: '1rem', marginBottom: '1rem', flexWrap: 'wrap' }}>
-                {role === 'ADMIN' && (
-                    <select name="baseId" value={filters.baseId} onChange={handleFilterChange} className="form-control">
-                        <option value="">All Bases</option>
-                        {bases.map(b => <option key={b.baseId} value={b.baseId}>{b.baseName}</option>)}
-                    </select>
-                )}
-                <select name="equipmentTypeId" value={filters.equipmentTypeId} onChange={handleFilterChange} className="form-control">
-                    <option value="">All Equipment</option>
-                    {equipmentTypes.map(e => <option key={e.equipmentTypeId} value={e.equipmentTypeId}>{e.equipmentName}</option>)}
-                </select>
-                <input type="date" name="startDate" value={filters.startDate} onChange={handleFilterChange} className="form-control" placeholder="Start Date" />
-                <input type="date" name="endDate" value={filters.endDate} onChange={handleFilterChange} className="form-control" placeholder="End Date" />
+            <div className="filter-card card" style={{ marginBottom: '24px' }}>
+                <div className="filter-header">
+                    <h3><Filter size={18} /> Purchase Filters</h3>
+                </div>
+                <div className="filter-grid">
+                    {role === 'ADMIN' && (
+                        <div className="form-group">
+                            <label>Base Location</label>
+                            <select name="baseId" value={filters.baseId} onChange={handleFilterChange} className="form-control">
+                                <option value="">All Bases</option>
+                                {bases.map(b => <option key={b.baseId} value={b.baseId}>{b.baseName}</option>)}
+                            </select>
+                        </div>
+                    )}
+                    <div className="form-group">
+                        <label>Equipment Type</label>
+                        <select name="equipmentTypeId" value={filters.equipmentTypeId} onChange={handleFilterChange} className="form-control">
+                            <option value="">All Equipment</option>
+                            {equipmentTypes.map(e => <option key={e.equipmentTypeId} value={e.equipmentTypeId}>{e.equipmentName}</option>)}
+                        </select>
+                    </div>
+                    <div className="form-group">
+                        <label>Start Date</label>
+                        <input type="date" name="startDate" value={filters.startDate} onChange={handleFilterChange} className="form-control" />
+                    </div>
+                    <div className="form-group">
+                        <label>End Date</label>
+                        <input type="date" name="endDate" value={filters.endDate} onChange={handleFilterChange} className="form-control" />
+                    </div>
+                    <div className="filter-actions" style={{ gridColumn: '1 / -1' }}>
+                        <button onClick={resetFilters} className="btn-secondary">Reset Filters</button>
+                    </div>
+                </div>
             </div>
 
-            <div className="table-responsive" style={{ overflowX: 'auto' }}>
-                <table className="data-table" style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
-                    <thead>
-                        <tr style={{ borderBottom: '2px solid #ccc' }}>
-                            <th style={{ padding: '0.5rem' }}>Ref #</th>
-                            <th style={{ padding: '0.5rem' }}>Date</th>
-                            <th style={{ padding: '0.5rem' }}>Base</th>
-                            <th style={{ padding: '0.5rem' }}>Equipment</th>
-                            <th style={{ padding: '0.5rem' }}>Qty</th>
-                            <th style={{ padding: '0.5rem' }}>Supplier</th>
-                            <th style={{ padding: '0.5rem' }}>Unit Cost</th>
-                            <th style={{ padding: '0.5rem' }}>Total Cost</th>
-                            <th style={{ padding: '0.5rem' }}>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {loading ? (
-                            <tr><td colSpan="9" style={{ textAlign: 'center', padding: '1rem' }}>Loading...</td></tr>
-                        ) : purchases.length === 0 ? (
-                            <tr><td colSpan="9" style={{ textAlign: 'center', padding: '1rem' }}>No purchases found.</td></tr>
-                        ) : (
-                            purchases.map(p => (
-                                <tr key={p.purchaseId} style={{ borderBottom: '1px solid #eee' }}>
-                                    <td style={{ padding: '0.5rem' }}>{p.referenceNumber}</td>
-                                    <td style={{ padding: '0.5rem' }}>{p.purchaseDate}</td>
-                                    <td style={{ padding: '0.5rem' }}>{p.base?.baseCode}</td>
-                                    <td style={{ padding: '0.5rem' }}>{p.equipmentType?.equipmentName}</td>
-                                    <td style={{ padding: '0.5rem' }}>{p.quantity}</td>
-                                    <td style={{ padding: '0.5rem' }}>{p.supplier}</td>
-                                    <td style={{ padding: '0.5rem' }}>${p.unitCost?.toFixed(2)}</td>
-                                    <td style={{ padding: '0.5rem', fontWeight: 'bold' }}>${p.totalCost?.toFixed(2)}</td>
-                                    <td style={{ padding: '0.5rem' }}>
-                                        <button onClick={() => openEditModal(p)} style={{ marginRight: '0.5rem' }}>Edit</button>
-                                        {role === 'ADMIN' && (
-                                            <button onClick={() => handleDelete(p.purchaseId)} style={{ color: 'red' }}>Delete</button>
-                                        )}
-                                    </td>
+            <div className="table-container">
+                {loading ? (
+                    <div className="loading-container" style={{ minHeight: '300px' }}>
+                        <div className="spinner"></div>
+                        <span>Loading purchases...</span>
+                    </div>
+                ) : purchases.length === 0 ? (
+                    <div className="empty-state" style={{ border: 'none' }}>
+                        <div className="empty-icon">
+                            <ShoppingCart size={32} />
+                        </div>
+                        <h3>No purchases found</h3>
+                        <p>No purchase records match your current filter criteria.</p>
+                        <button className="btn-secondary" style={{ marginTop: '16px' }} onClick={openCreateModal}>
+                            Record First Purchase
+                        </button>
+                    </div>
+                ) : (
+                    <div style={{ overflowX: 'auto' }}>
+                        <table className="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Ref #</th>
+                                    <th>Date</th>
+                                    <th>Base</th>
+                                    <th>Equipment</th>
+                                    <th>Qty</th>
+                                    <th>Supplier</th>
+                                    <th>Unit Cost</th>
+                                    <th>Total Cost</th>
+                                    <th style={{ textAlign: 'right' }}>Actions</th>
                                 </tr>
-                            ))
-                        )}
-                    </tbody>
-                </table>
+                            </thead>
+                            <tbody>
+                                {purchases.map(p => (
+                                    <tr key={p.purchaseId}>
+                                        <td><span style={{ fontFamily: 'monospace', fontWeight: 600 }}>{p.referenceNumber}</span></td>
+                                        <td>{p.purchaseDate}</td>
+                                        <td>
+                                            <span className="badge badge-base">{p.base?.baseCode}</span>
+                                        </td>
+                                        <td>{p.equipmentType?.equipmentName}</td>
+                                        <td>{p.quantity}</td>
+                                        <td>{p.supplier}</td>
+                                        <td>${p.unitCost?.toFixed(2)}</td>
+                                        <td style={{ fontWeight: 600 }}>${p.totalCost?.toFixed(2)}</td>
+                                        <td style={{ textAlign: 'right' }}>
+                                            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
+                                                <button onClick={() => openEditModal(p)} className="icon-btn" title="Edit">
+                                                    <Edit size={16} />
+                                                </button>
+                                                {role === 'ADMIN' && (
+                                                    <button onClick={() => handleDelete(p.purchaseId)} className="icon-btn" style={{ color: 'var(--danger)' }} title="Delete">
+                                                        <Trash2 size={16} />
+                                                    </button>
+                                                )}
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                )}
             </div>
 
-            <div className="pagination" style={{ marginTop: '1rem', display: 'flex', gap: '0.5rem' }}>
-                <button disabled={page === 0} onClick={() => setPage(page - 1)}>Previous</button>
-                <span>Page {page + 1} of {totalPages === 0 ? 1 : totalPages}</span>
-                <button disabled={page >= totalPages - 1} onClick={() => setPage(page + 1)}>Next</button>
-            </div>
+            {!loading && totalPages > 1 && (
+                <div className="pagination" style={{ 
+                    display: 'flex', 
+                    justifyContent: 'flex-end', 
+                    alignItems: 'center', 
+                    gap: '16px', 
+                    marginTop: '24px' 
+                }}>
+                    <span style={{ fontSize: '14px', color: 'var(--text-secondary)' }}>
+                        Page {page + 1} of {totalPages}
+                    </span>
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                        <button 
+                            onClick={() => setPage(p => Math.max(0, p - 1))} 
+                            disabled={page === 0}
+                            className="btn-secondary"
+                            style={{ padding: '8px' }}
+                        >
+                            <ChevronLeft size={16} />
+                        </button>
+                        <button 
+                            onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))} 
+                            disabled={page >= totalPages - 1}
+                            className="btn-secondary"
+                            style={{ padding: '8px' }}
+                        >
+                            <ChevronRight size={16} />
+                        </button>
+                    </div>
+                </div>
+            )}
 
             {/* Modal */}
             {showModal && (
-                <div className="modal-overlay" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-                    <div className="modal-content" style={{ background: '#fff', padding: '2rem', borderRadius: '8px', width: '100%', maxWidth: '500px' }}>
-                        <h3>{formData.purchaseId ? 'Edit Purchase' : 'Add Purchase'}</h3>
-                        {formError && <div className="alert error">{formError}</div>}
-                        
-                        <form onSubmit={savePurchase}>
-                            <div className="form-group">
-                                <label>Base</label>
-                                <select name="baseId" value={formData.baseId} onChange={handleFormChange} required disabled={role !== 'ADMIN'}>
-                                    <option value="">Select Base</option>
-                                    {bases.map(b => <option key={b.baseId} value={b.baseId}>{b.baseName}</option>)}
-                                </select>
-                            </div>
+                <div className="modal-overlay" onClick={() => !saving && setShowModal(false)}>
+                    <div className="modal-content" onClick={e => e.stopPropagation()}>
+                        <div className="modal-header">
+                            <h2>{formData.purchaseId ? 'Edit Purchase' : 'Add New Purchase'}</h2>
+                            <button className="close-btn" onClick={() => setShowModal(false)} disabled={saving}>
+                                <X size={20} />
+                            </button>
+                        </div>
+                        <div className="modal-body">
+                            {formError && <div className="alert error">{formError}</div>}
                             
-                            <div className="form-group">
-                                <label>Equipment Type</label>
-                                <select name="equipmentTypeId" value={formData.equipmentTypeId} onChange={handleFormChange} required>
-                                    <option value="">Select Equipment</option>
-                                    {equipmentTypes.map(e => <option key={e.equipmentTypeId} value={e.equipmentTypeId}>{e.equipmentName}</option>)}
-                                </select>
-                            </div>
-
-                            <div style={{ display: 'flex', gap: '1rem' }}>
-                                <div className="form-group" style={{ flex: 1 }}>
-                                    <label>Quantity</label>
-                                    <input type="number" name="quantity" value={formData.quantity} onChange={handleFormChange} required min="1" />
+                            <form id="purchase-form" onSubmit={savePurchase}>
+                                <div className="form-group">
+                                    <label>Base Location</label>
+                                    <select name="baseId" value={formData.baseId} onChange={handleFormChange} required disabled={role !== 'ADMIN'} className="form-control">
+                                        <option value="">Select Base</option>
+                                        {bases.map(b => <option key={b.baseId} value={b.baseId}>{b.baseName}</option>)}
+                                    </select>
                                 </div>
-                                <div className="form-group" style={{ flex: 1 }}>
-                                    <label>Unit Cost ($)</label>
-                                    <input type="number" step="0.01" name="unitCost" value={formData.unitCost} onChange={handleFormChange} required min="0" />
+                                
+                                <div className="form-group">
+                                    <label>Equipment Type</label>
+                                    <select name="equipmentTypeId" value={formData.equipmentTypeId} onChange={handleFormChange} required className="form-control">
+                                        <option value="">Select Equipment</option>
+                                        {equipmentTypes.map(e => <option key={e.equipmentTypeId} value={e.equipmentTypeId}>{e.equipmentName}</option>)}
+                                    </select>
                                 </div>
-                            </div>
-                            
-                            <div className="form-group">
-                                <label>Total Cost (Calculated by Backend)</label>
-                                <input type="text" value={`$${(formData.quantity * formData.unitCost).toFixed(2)}`} disabled />
-                            </div>
 
-                            <div className="form-group">
-                                <label>Purchase Date</label>
-                                <input type="date" name="purchaseDate" value={formData.purchaseDate} onChange={handleFormChange} required />
-                            </div>
+                                <div style={{ display: 'flex', gap: '16px' }}>
+                                    <div className="form-group" style={{ flex: 1 }}>
+                                        <label>Quantity</label>
+                                        <input type="number" name="quantity" value={formData.quantity} onChange={handleFormChange} required min="1" className="form-control" />
+                                    </div>
+                                    <div className="form-group" style={{ flex: 1 }}>
+                                        <label>Unit Cost ($)</label>
+                                        <input type="number" step="0.01" name="unitCost" value={formData.unitCost} onChange={handleFormChange} required min="0" className="form-control" />
+                                    </div>
+                                </div>
+                                
+                                <div className="form-group">
+                                    <label>Total Cost</label>
+                                    <input type="text" value={`$${(formData.quantity * formData.unitCost).toFixed(2)}`} disabled className="form-control" style={{ background: '#f8fafc', fontWeight: 600 }} />
+                                </div>
 
-                            <div className="form-group">
-                                <label>Reference Number</label>
-                                <input type="text" name="referenceNumber" value={formData.referenceNumber} onChange={handleFormChange} required />
-                            </div>
+                                <div className="form-group">
+                                    <label>Purchase Date</label>
+                                    <input type="date" name="purchaseDate" value={formData.purchaseDate} onChange={handleFormChange} required className="form-control" />
+                                </div>
 
-                            <div className="form-group">
-                                <label>Supplier</label>
-                                <input type="text" name="supplier" value={formData.supplier} onChange={handleFormChange} required />
-                            </div>
+                                <div className="form-group">
+                                    <label>Reference Number</label>
+                                    <input type="text" name="referenceNumber" value={formData.referenceNumber} onChange={handleFormChange} required className="form-control" placeholder="PO-12345" />
+                                </div>
 
-                            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginTop: '1.5rem' }}>
-                                <button type="button" onClick={() => setShowModal(false)} disabled={saving}>Cancel</button>
-                                <button type="submit" className="btn-primary" disabled={saving}>{saving ? 'Saving...' : 'Save Purchase'}</button>
-                            </div>
-                        </form>
+                                <div className="form-group">
+                                    <label>Supplier</label>
+                                    <input type="text" name="supplier" value={formData.supplier} onChange={handleFormChange} required className="form-control" placeholder="Vendor Name" />
+                                </div>
+                            </form>
+                        </div>
+                        <div className="modal-footer">
+                            <button type="button" onClick={() => setShowModal(false)} className="btn-secondary" disabled={saving}>Cancel</button>
+                            <button type="submit" form="purchase-form" className="btn-primary" disabled={saving}>
+                                {saving ? 'Saving...' : 'Save Purchase'}
+                            </button>
+                        </div>
                     </div>
                 </div>
             )}

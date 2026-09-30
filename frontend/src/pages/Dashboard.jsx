@@ -2,6 +2,32 @@ import React, { useState, useEffect, useContext } from 'react';
 import { dashboardService } from '../services/dashboardService';
 import { baseService, equipmentTypeService } from '../services/dataService';
 import { AuthContext } from '../context/AuthContext';
+import { 
+    PackageOpen, 
+    ShoppingCart, 
+    ArrowRightLeft, 
+    LogOut, 
+    Banknote, 
+    Package, 
+    UserCheck,
+    Filter,
+    Calendar,
+    Search,
+    X
+} from 'lucide-react';
+import './Dashboard.css'; // Let's put some specific styles here if needed
+
+const KPI = ({ title, value, icon, iconColor, onClick }) => (
+    <div className={`kpi-card ${onClick ? 'clickable' : ''}`} onClick={onClick}>
+        <div className="kpi-icon-wrapper" style={{ background: `${iconColor}15`, color: iconColor }}>
+            {icon}
+        </div>
+        <div className="kpi-content">
+            <h4 className="kpi-title">{title}</h4>
+            <div className="kpi-value">{value}</div>
+        </div>
+    </div>
+);
 
 const Dashboard = () => {
     const { role, baseId: userBaseId } = useContext(AuthContext);
@@ -15,7 +41,6 @@ const Dashboard = () => {
     
     const [showNetMovementDetails, setShowNetMovementDetails] = useState(false);
 
-    // Default to first day of current month to today
     const defaultStart = new Date();
     defaultStart.setDate(1);
     const [filters, setFilters] = useState({
@@ -81,129 +106,172 @@ const Dashboard = () => {
                summary.transferIn === 0 && 
                summary.transferOut === 0 && 
                summary.expenditure === 0 && 
-               summary.closingBalance === 0;
+               summary.closingBalance === 0 &&
+               summary.assigned === 0;
     };
 
     return (
-        <div className="page-content">
-            <div className="page-header" style={{ marginBottom: '1rem' }}>
-                <h2>Dashboard</h2>
-            </div>
-
-            <div className="filters dashboard-filters" style={{ display: 'flex', gap: '1rem', marginBottom: '2rem', flexWrap: 'wrap', alignItems: 'center', background: '#f8f9fa', padding: '1rem', borderRadius: '8px' }}>
-                <div>
-                    <label style={{ display: 'block', fontSize: '0.8rem', color: '#6c757d' }}>Start Date</label>
-                    <input type="date" name="startDate" value={filters.startDate} onChange={handleFilterChange} className="form-control" />
+        <div className="dashboard-container">
+            <div className="filter-card card">
+                <div className="filter-header">
+                    <h3><Filter size={18} /> Inventory Filters</h3>
                 </div>
-                <div>
-                    <label style={{ display: 'block', fontSize: '0.8rem', color: '#6c757d' }}>End Date</label>
-                    <input type="date" name="endDate" value={filters.endDate} onChange={handleFilterChange} className="form-control" />
-                </div>
-                <div>
-                    <label style={{ display: 'block', fontSize: '0.8rem', color: '#6c757d' }}>Base</label>
-                    <select name="baseId" value={filters.baseId} onChange={handleFilterChange} className="form-control" disabled={role !== 'ADMIN'}>
-                        <option value="">All Bases</option>
-                        {bases.map(b => <option key={b.baseId} value={b.baseId}>{b.baseName}</option>)}
-                    </select>
-                </div>
-                <div>
-                    <label style={{ display: 'block', fontSize: '0.8rem', color: '#6c757d' }}>Equipment</label>
-                    <select name="equipmentTypeId" value={filters.equipmentTypeId} onChange={handleFilterChange} className="form-control">
-                        <option value="">All Equipment</option>
-                        {equipmentTypes.map(e => <option key={e.equipmentTypeId} value={e.equipmentTypeId}>{e.equipmentName}</option>)}
-                    </select>
-                </div>
-                <div style={{ marginTop: 'auto' }}>
-                    <button onClick={handleReset} style={{ background: '#6c757d', color: 'white', border: 'none', padding: '0.5rem 1rem', borderRadius: '4px', cursor: 'pointer' }}>Reset</button>
+                <div className="filter-grid">
+                    <div className="form-group">
+                        <label>Start Date</label>
+                        <div className="input-with-icon">
+                            <input type="date" name="startDate" value={filters.startDate} onChange={handleFilterChange} className="form-control" />
+                        </div>
+                    </div>
+                    <div className="form-group">
+                        <label>End Date</label>
+                        <div className="input-with-icon">
+                            <input type="date" name="endDate" value={filters.endDate} onChange={handleFilterChange} className="form-control" />
+                        </div>
+                    </div>
+                    <div className="form-group">
+                        <label>Base Location</label>
+                        <select name="baseId" value={filters.baseId} onChange={handleFilterChange} className="form-control" disabled={role !== 'ADMIN'}>
+                            <option value="">All Bases</option>
+                            {bases.map(b => <option key={b.baseId} value={b.baseId}>{b.baseName}</option>)}
+                        </select>
+                    </div>
+                    <div className="form-group">
+                        <label>Equipment Type</label>
+                        <select name="equipmentTypeId" value={filters.equipmentTypeId} onChange={handleFilterChange} className="form-control">
+                            <option value="">All Equipment</option>
+                            {equipmentTypes.map(e => <option key={e.equipmentTypeId} value={e.equipmentTypeId}>{e.equipmentName}</option>)}
+                        </select>
+                    </div>
+                    <div className="filter-actions">
+                        <button onClick={handleReset} className="btn-secondary">Reset</button>
+                    </div>
                 </div>
             </div>
 
             {error ? (
                 <div className="alert error">
-                    {error} <button onClick={loadDashboard} style={{ marginLeft: '1rem' }}>Retry</button>
+                    {error} <button onClick={loadDashboard} className="btn-secondary" style={{ marginLeft: 'auto', padding: '4px 12px' }}>Retry</button>
                 </div>
             ) : loading ? (
-                <div style={{ textAlign: 'center', padding: '3rem' }}>
-                    <h3>Loading Dashboard...</h3>
+                <div className="loading-container">
+                    <div className="spinner"></div>
+                    <span>Loading dashboard data...</span>
                 </div>
             ) : isAllZeros() ? (
-                <div style={{ textAlign: 'center', padding: '3rem', background: '#f8f9fa', borderRadius: '8px' }}>
-                    <h3 style={{ color: '#6c757d' }}>No inventory movement found for the selected filters.</h3>
+                <div className="empty-state">
+                    <div className="empty-icon">
+                        <Package size={32} />
+                    </div>
+                    <h3>No inventory movement found</h3>
+                    <p>Try adjusting the selected date range, base location, or equipment type filters above.</p>
                 </div>
             ) : (
-                <div className="dashboard-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.5rem' }}>
-                    
-                    <div className="stat-card" style={{ background: '#fff', padding: '1.5rem', borderRadius: '8px', boxShadow: '0 2px 4px rgba(0,0,0,0.05)', borderLeft: '4px solid #6c757d' }}>
-                        <h4 style={{ margin: 0, color: '#6c757d', fontSize: '0.9rem', textTransform: 'uppercase' }}>Opening Balance</h4>
-                        <div style={{ fontSize: '2rem', fontWeight: 'bold', marginTop: '0.5rem' }}>{summary.openingBalance}</div>
+                <>
+                    <h3 className="section-title">Inventory Overview</h3>
+                    <div className="kpi-grid">
+                        <KPI 
+                            title="Opening Balance" 
+                            value={summary.openingBalance} 
+                            icon={<PackageOpen size={24} />} 
+                            iconColor="var(--primary-navy)" 
+                        />
+                        <KPI 
+                            title="Closing Balance" 
+                            value={summary.closingBalance} 
+                            icon={<Package size={24} />} 
+                            iconColor="var(--military-green)" 
+                        />
+                        <KPI 
+                            title="Net Movement" 
+                            value={(summary.netMovement > 0 ? '+' : '') + summary.netMovement} 
+                            icon={<ArrowRightLeft size={24} />} 
+                            iconColor={summary.netMovement >= 0 ? "var(--accent-green)" : "var(--danger)"} 
+                            onClick={() => setShowNetMovementDetails(true)}
+                        />
+                        <KPI 
+                            title="Currently Assigned" 
+                            value={summary.assigned} 
+                            icon={<UserCheck size={24} />} 
+                            iconColor="#0284c7" 
+                        />
+                        <KPI 
+                            title="Total Expended" 
+                            value={summary.expenditure} 
+                            icon={<LogOut size={24} />} 
+                            iconColor="var(--warning)" 
+                        />
                     </div>
 
-                    <div className="stat-card" style={{ background: '#fff', padding: '1.5rem', borderRadius: '8px', boxShadow: '0 2px 4px rgba(0,0,0,0.05)', borderLeft: '4px solid #28a745' }}>
-                        <h4 style={{ margin: 0, color: '#6c757d', fontSize: '0.9rem', textTransform: 'uppercase' }}>Purchases</h4>
-                        <div style={{ fontSize: '2rem', fontWeight: 'bold', marginTop: '0.5rem' }}>+{summary.purchases}</div>
+                    <h3 className="section-title mt-8">Movement Breakdown</h3>
+                    <div className="kpi-grid">
+                        <KPI 
+                            title="New Purchases" 
+                            value={'+' + summary.purchases} 
+                            icon={<ShoppingCart size={24} />} 
+                            iconColor="var(--accent-green)" 
+                        />
+                        <KPI 
+                            title="Transfers In" 
+                            value={'+' + summary.transferIn} 
+                            icon={<ArrowRightLeft size={24} />} 
+                            iconColor="#0ea5e9" 
+                        />
+                        <KPI 
+                            title="Transfers Out" 
+                            value={'-' + summary.transferOut} 
+                            icon={<LogOut size={24} />} 
+                            iconColor="var(--danger)" 
+                        />
                     </div>
-
-                    <div className="stat-card" style={{ background: '#fff', padding: '1.5rem', borderRadius: '8px', boxShadow: '0 2px 4px rgba(0,0,0,0.05)', borderLeft: '4px solid #17a2b8' }}>
-                        <h4 style={{ margin: 0, color: '#6c757d', fontSize: '0.9rem', textTransform: 'uppercase' }}>Transfer In</h4>
-                        <div style={{ fontSize: '2rem', fontWeight: 'bold', marginTop: '0.5rem' }}>+{summary.transferIn}</div>
-                    </div>
-
-                    <div className="stat-card" style={{ background: '#fff', padding: '1.5rem', borderRadius: '8px', boxShadow: '0 2px 4px rgba(0,0,0,0.05)', borderLeft: '4px solid #ffc107' }}>
-                        <h4 style={{ margin: 0, color: '#6c757d', fontSize: '0.9rem', textTransform: 'uppercase' }}>Transfer Out</h4>
-                        <div style={{ fontSize: '2rem', fontWeight: 'bold', marginTop: '0.5rem' }}>-{summary.transferOut}</div>
-                    </div>
-
-                    <div className="stat-card" style={{ background: '#fff', padding: '1.5rem', borderRadius: '8px', boxShadow: '0 2px 4px rgba(0,0,0,0.05)', borderLeft: '4px solid #007bff', cursor: 'pointer' }} onClick={() => setShowNetMovementDetails(true)}>
-                        <h4 style={{ margin: 0, color: '#6c757d', fontSize: '0.9rem', textTransform: 'uppercase' }}>Net Movement <small>(Click)</small></h4>
-                        <div style={{ fontSize: '2rem', fontWeight: 'bold', marginTop: '0.5rem', color: summary.netMovement >= 0 ? '#28a745' : '#dc3545' }}>
-                            {summary.netMovement > 0 ? '+' : ''}{summary.netMovement}
-                        </div>
-                    </div>
-
-                    <div className="stat-card" style={{ background: '#fff', padding: '1.5rem', borderRadius: '8px', boxShadow: '0 2px 4px rgba(0,0,0,0.05)', borderLeft: '4px solid #dc3545' }}>
-                        <h4 style={{ margin: 0, color: '#6c757d', fontSize: '0.9rem', textTransform: 'uppercase' }}>Expenditure</h4>
-                        <div style={{ fontSize: '2rem', fontWeight: 'bold', marginTop: '0.5rem' }}>-{summary.expenditure}</div>
-                    </div>
-
-                    <div className="stat-card" style={{ background: '#fff', padding: '1.5rem', borderRadius: '8px', boxShadow: '0 2px 4px rgba(0,0,0,0.05)', borderLeft: '4px solid #343a40' }}>
-                        <h4 style={{ margin: 0, color: '#6c757d', fontSize: '0.9rem', textTransform: 'uppercase' }}>Closing Balance</h4>
-                        <div style={{ fontSize: '2rem', fontWeight: 'bold', marginTop: '0.5rem' }}>{summary.closingBalance}</div>
-                    </div>
-
-                    <div className="stat-card" style={{ background: '#fff', padding: '1.5rem', borderRadius: '8px', boxShadow: '0 2px 4px rgba(0,0,0,0.05)', borderLeft: '4px solid #6f42c1' }}>
-                        <h4 style={{ margin: 0, color: '#6c757d', fontSize: '0.9rem', textTransform: 'uppercase' }}>Assigned</h4>
-                        <div style={{ fontSize: '2rem', fontWeight: 'bold', marginTop: '0.5rem' }}>{summary.assigned}</div>
-                    </div>
-                </div>
+                </>
             )}
 
             {showNetMovementDetails && summary && (
-                <div className="modal-overlay" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-                    <div className="modal-content" style={{ background: '#fff', padding: '2rem', borderRadius: '8px', width: '100%', maxWidth: '400px' }}>
-                        <h3 style={{ marginTop: 0 }}>Net Movement Details</h3>
-                        <div style={{ margin: '1.5rem 0', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                                <span>Purchases</span>
-                                <span style={{ color: '#28a745' }}>+{summary.purchases}</span>
-                            </div>
-                            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                                <span>Transfer In</span>
-                                <span style={{ color: '#28a745' }}>+{summary.transferIn}</span>
-                            </div>
-                            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                                <span>Transfer Out</span>
-                                <span style={{ color: '#dc3545' }}>-{summary.transferOut}</span>
-                            </div>
-                            <hr style={{ width: '100%', border: 'none', borderTop: '1px solid #ccc' }} />
-                            <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 'bold' }}>
-                                <span>Net Movement</span>
-                                <span style={{ color: summary.netMovement >= 0 ? '#28a745' : '#dc3545' }}>
-                                    {summary.netMovement > 0 ? '+' : ''}{summary.netMovement}
-                                </span>
+                <div className="modal-overlay" onClick={() => setShowNetMovementDetails(false)}>
+                    <div className="modal-content" onClick={e => e.stopPropagation()}>
+                        <div className="modal-header">
+                            <h2>Net Movement Details</h2>
+                            <button className="close-btn" onClick={() => setShowNetMovementDetails(false)}>
+                                <X size={20} />
+                            </button>
+                        </div>
+                        <div className="modal-body">
+                            <div className="movement-details">
+                                <div className="movement-row">
+                                    <div className="movement-label">
+                                        <div className="movement-dot bg-green"></div>
+                                        <span>Purchases</span>
+                                    </div>
+                                    <span className="movement-val positive">+{summary.purchases}</span>
+                                </div>
+                                <div className="movement-row">
+                                    <div className="movement-label">
+                                        <div className="movement-dot bg-blue"></div>
+                                        <span>Transfer In</span>
+                                    </div>
+                                    <span className="movement-val positive">+{summary.transferIn}</span>
+                                </div>
+                                <div className="movement-row">
+                                    <div className="movement-label">
+                                        <div className="movement-dot bg-red"></div>
+                                        <span>Transfer Out</span>
+                                    </div>
+                                    <span className="movement-val negative">-{summary.transferOut}</span>
+                                </div>
+                                
+                                <div className="movement-divider"></div>
+                                
+                                <div className="movement-row total">
+                                    <span>Total Net Movement</span>
+                                    <span className={summary.netMovement >= 0 ? "positive" : "negative"}>
+                                        {summary.netMovement > 0 ? '+' : ''}{summary.netMovement}
+                                    </span>
+                                </div>
                             </div>
                         </div>
-                        <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-                            <button onClick={() => setShowNetMovementDetails(false)} className="btn-primary">Close</button>
+                        <div className="modal-footer">
+                            <button onClick={() => setShowNetMovementDetails(false)} className="btn-primary">Acknowledge</button>
                         </div>
                     </div>
                 </div>

@@ -1,6 +1,7 @@
 import React, { useState, useContext } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
+import { Shield, Lock, User } from 'lucide-react';
 
 const Login = () => {
     const { login } = useContext(AuthContext);
@@ -42,42 +43,71 @@ const Login = () => {
     return (
         <div className="auth-container">
             <div className="auth-card">
-                <h2>Sign In to MAMS</h2>
+                <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '24px' }}>
+                    <div style={{ 
+                        width: '64px', 
+                        height: '64px', 
+                        borderRadius: '16px', 
+                        background: 'var(--primary-navy)', 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        justifyContent: 'center',
+                        color: 'var(--accent-green)',
+                        boxShadow: '0 4px 6px rgba(15, 39, 66, 0.2)'
+                    }}>
+                        <Shield size={36} />
+                    </div>
+                </div>
+                <h2>Military Asset Management System</h2>
+                <p className="subtitle">Sign in to your secure account</p>
+                
                 {error && <div className="alert error">{error}</div>}
                 
-                <form onSubmit={handleSubmit}>
+                <form onSubmit={handleSubmit} style={{ marginTop: '24px' }}>
                     <div className="form-group">
                         <label htmlFor="usernameOrEmail">Username or Email</label>
-                        <input 
-                            type="text" 
-                            id="usernameOrEmail" 
-                            name="usernameOrEmail" 
-                            value={credentials.usernameOrEmail} 
-                            onChange={handleChange} 
-                            required 
-                            autoFocus
-                        />
+                        <div className="input-with-icon">
+                            <User size={18} className="search-icon" style={{ position: 'absolute', left: '12px', top: '10px', color: '#94a3b8' }} />
+                            <input 
+                                type="text" 
+                                id="usernameOrEmail" 
+                                name="usernameOrEmail" 
+                                value={credentials.usernameOrEmail} 
+                                onChange={handleChange} 
+                                required 
+                                autoFocus
+                                className="form-control"
+                                style={{ paddingLeft: '38px' }}
+                                placeholder="Enter your username"
+                            />
+                        </div>
                     </div>
                     
                     <div className="form-group">
                         <label htmlFor="password">Password</label>
-                        <input 
-                            type="password" 
-                            id="password" 
-                            name="password" 
-                            value={credentials.password} 
-                            onChange={handleChange} 
-                            required 
-                        />
+                        <div className="input-with-icon">
+                            <Lock size={18} className="search-icon" style={{ position: 'absolute', left: '12px', top: '10px', color: '#94a3b8' }} />
+                            <input 
+                                type="password" 
+                                id="password" 
+                                name="password" 
+                                value={credentials.password} 
+                                onChange={handleChange} 
+                                required 
+                                className="form-control"
+                                style={{ paddingLeft: '38px' }}
+                                placeholder="Enter your password"
+                            />
+                        </div>
                     </div>
                     
-                    <button type="submit" className="btn-primary btn-block" disabled={loading}>
-                        {loading ? 'Signing in...' : 'Sign In'}
+                    <button type="submit" className="btn-primary btn-block" disabled={loading} style={{ marginTop: '24px' }}>
+                        {loading ? 'Authenticating...' : 'Secure Sign In'}
                     </button>
                 </form>
                 
                 <div className="auth-footer">
-                    <p>Don't have an account? <Link to="/register">Create Account</Link></p>
+                    <p>Don't have an account? <Link to="/register">Request Access</Link></p>
                 </div>
             </div>
         </div>
